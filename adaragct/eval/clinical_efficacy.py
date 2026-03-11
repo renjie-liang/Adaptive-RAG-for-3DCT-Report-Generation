@@ -209,7 +209,7 @@ def _compute_clinical_metrics_from_arrays(y_true: np.ndarray, y_pred: np.ndarray
 def compute_clinical_efficacy_from_labels(
     hypotheses: List[str],
     y_true_labels: Union[List[List[int]], np.ndarray],
-    checkpoint_path: str = "/orange/xujie/liang.renjie/DATA/weights/CT-CLIP/RadBertClassifier.pth",
+    checkpoint_path: str = "/path/to/CT-CLIP/RadBertClassifier.pth",
     device: str = 'cuda'
 ) -> Dict[str, float]:
     if len(hypotheses) == 0:
@@ -253,7 +253,7 @@ def compute_clinical_efficacy_from_labels(
 # ============================================================
 
 DEFAULT_CLINICAL_LABELS_CSV = "data/annotations/valid_predicted_labels.csv"
-DEFAULT_RADBERT_CHECKPOINT = "/orange/xujie/liang.renjie/DATA/weights/CT-CLIP/RadBertClassifier.pth"
+DEFAULT_RADBERT_CHECKPOINT = "/path/to/CT-CLIP/RadBertClassifier.pth"
 
 
 def _normalize_volume_name(name: str) -> str:

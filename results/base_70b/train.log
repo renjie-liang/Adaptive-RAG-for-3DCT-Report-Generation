@@ -1,0 +1,1618 @@
+================================================================================
+Configuration:
+================================================================================
+experiment:
+  name: E43_70b_sft
+  seed: 42
+  run_name: E43_70b_sft_20260226_222447
+device:
+  type: cuda
+paths:
+  output_dir: results/base_model/E43_70b_sft
+  checkpoint_dir: results/base_model/E43_70b_sft/checkpoints
+model:
+  model_path: /orange/xujie/liang.renjie/DATA/weights/Llama-3.3-70B-Instruct
+  model_name: llava-llama
+  use_flash_attn: False
+  gradient_checkpointing: True
+  train_projector_only: False
+  pretrain_checkpoint: ./results/base_model/E42_70b_projector/checkpoints/step_9000
+  freeze_projector: True
+  lora_r: 128
+  lora_alpha: 256
+  lora_dropout: 0.05
+  lora_target_modules: ['down_proj', 'gate_proj', 'k_proj', 'o_proj', 'q_proj', 'up_proj', 'v_proj']
+  projector_type: independent
+  projector_layers: 2
+  tokens_per_embedding: 1
+data:
+  train_embeddings_npz: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/ViSD-Boost-embeds/train_embeds.npz
+  val_embeddings_npz: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/ViSD-Boost-embeds/valid_embeds.npz
+  whole_ct_key: ct_clip_max
+  whole_ct_dim: 512
+  whole_ct_embeddings_npz_train: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/CT-CLIP-embeds/train_embeds.npz
+  whole_ct_embeddings_npz_val: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/CT-CLIP-embeds/valid_embeds.npz
+  organ_keys: ['lung', 'heart', 'esophagus', 'aorta']
+  train_vqa_json: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/vqa/train_vqa.json
+  val_vqa_json: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/vqa/valid_vqa.json
+  sample_types: ['image']
+  train_tasks: ['report_generation']
+  batch_size: 4
+  num_workers: 4
+  use_chat_template: True
+  system_prompt: detailed
+training:
+  max_steps: 10000
+  save_every: 500
+  optimizer:
+    type: adamw
+    lr: 2e-05
+    weight_decay: 0.05
+    betas: [0.9, 0.999]
+    eps: 1e-08
+    separate_wd_groups: True
+  scheduler:
+    type: warmup_cosine
+    warmup_steps: 500
+    min_lr_ratio: 0.01
+  grad_accum_steps: 8
+  max_seq_length_by_task:
+    report_generation: 2048
+  use_amp: True
+  label_smoothing: 0.0
+validation:
+  skip_validation: True
+  max_new_tokens_by_task:
+    report_generation: 512
+  temperature: 0.7
+  top_p: 0.95
+  top_k: 50
+  repetition_penalty: 1.1
+checkpoint:
+  keep_last_n: 20
+logging:
+  use_console: True
+  log_every: 10
+generation:
+  temperature: 0.7
+  top_p: 0.95
+  top_k: 50
+  repetition_penalty: 1.1
+================================================================================
+[2026-02-26 22:24:47] ================================================================================
+[2026-02-26 22:24:47] Stage 3 Turn: LLaVA Report Generation Training
+[2026-02-26 22:24:47] ================================================================================
+[2026-02-26 22:24:47] 🤖 Loading base model: llava-llama
+[2026-02-26 22:24:47] 📂 Model path: /orange/xujie/liang.renjie/DATA/weights/Llama-3.3-70B-Instruct
+[2026-02-26 22:24:47] ⚡ Flash attention: False
+[2026-02-26 22:24:47] 💾 Quantization: 8bit=False, 4bit=False
+[2026-02-26 22:26:20] ✅ Base model loaded successfully
+[2026-02-26 22:26:20] 📊 Model config: hidden_size=8192, vocab_size=128257
+[2026-02-26 22:26:20] 🔤 Tokenizer vocab size: 128257
+[2026-02-26 22:26:20] 🔧 Per-organ input dims: {'whole_ct': 512, 'lung': 256, 'heart': 256, 'esophagus': 256, 'aorta': 256}
+[2026-02-26 22:26:21] 🔧 Projector: independent (5 MLPs), 2-layer, per-organ dims={'whole_ct': 512, 'lung': 256, 'heart': 256, 'esophagus': 256, 'aorta': 256}, tokens_per_embedding=1
+[2026-02-26 22:26:21] 🔧 Projector initialized: 256 -> 8192
+[2026-02-26 22:26:22] 📦 Loaded projector.pt from merged dir: 20 keys
+[2026-02-26 22:26:22] 🎯 Added 4 task tokens + 5 organ tokens + 1 provided token
+[2026-02-26 22:26:22] 🔤 Final tokenizer vocab size: 128267
+[2026-02-26 22:26:22] 📋 Using config-specified target modules: ['down_proj', 'gate_proj', 'k_proj', 'o_proj', 'q_proj', 'up_proj', 'v_proj']
+[2026-02-26 22:26:33] 🎯 Training mode: LoRA fine-tuning
+[2026-02-26 22:26:33] 🔧 LoRA config: r=128, alpha=256, dropout=0.05
+[2026-02-26 22:26:33] 🎯 Target modules (7): ['down_proj', 'gate_proj', 'k_proj', 'o_proj', 'q_proj', 'up_proj', 'v_proj']
+[2026-02-26 22:26:33] 🔒 Projector FROZEN (freeze_projector=True)
+[2026-02-26 22:26:33] 📈 Training summary:
+[2026-02-26 22:26:33]    🎯 Total parameters: 72558.85M
+[2026-02-26 22:26:33]    🔥 Trainable parameters: 3758.28M (5.2%)
+[2026-02-26 22:26:33]    📱 Device: cuda, dtype: torch.bfloat16
+[2026-02-26 22:26:33] Total parameters: 72558.85M
+[2026-02-26 22:26:33] Trainable parameters: 3758.28M
+[2026-02-26 22:26:33] ========== ViSDVQADataset.__init__ START ==========
+[2026-02-26 22:26:33] embeddings_npz: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/ViSD-Boost-embeds/train_embeds.npz
+[2026-02-26 22:26:33] vqa_json_path: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/vqa/train_vqa.json
+[2026-02-26 22:26:33] train_tasks: ['report_generation']
+[2026-02-26 22:26:33] max_samples: None
+[2026-02-26 22:26:33] sample_types: ['image']
+[2026-02-26 22:26:33] use_chat_template: True
+[2026-02-26 22:26:33] system_prompt: detailed
+[2026-02-26 22:26:33] whole_ct_npz: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/CT-CLIP-embeds/train_embeds.npz
+[2026-02-26 22:26:33] whole_ct_dim: 512
+[2026-02-26 22:26:33] oversample_rare_findings: False (min_positives=3, factor=3.0)
+[2026-02-26 22:26:33] label_in_prompt: False (csv=None)
+[2026-02-26 22:26:33] organ_report_mode: None (json=None, single_organ_ratio=0.4)
+[2026-02-26 22:26:33] Resolved system_prompt: You are an experienced radiologist specializing in chest CT interpretation. Generate a detailed findings report covering all anatomical structures.
+[2026-02-26 22:26:33] Allowed tasks set: {'report_generation'}
+[2026-02-26 22:26:33] embedding_keys (NPZ): ['ct_clip_max', 'lung', 'heart', 'esophagus', 'aorta']
+[2026-02-26 22:26:33] NPZ keys: ['sample_ids', 'whole_ct_attention', 'whole_ct_weighted', 'lung', 'heart', 'esophagus', 'aorta']
+[2026-02-26 22:26:33] NPZ sample_ids count: 46407
+[2026-02-26 22:26:33] NPZ sample_ids first 5: ['train_6002_a_1.nii.gz', 'train_6002_a_2.nii.gz', 'train_3893_a_2.nii.gz', 'train_3893_a_1.nii.gz', 'train_3020_a_2.nii.gz']
+[2026-02-26 22:26:34] Separate whole_ct NPZ keys: ['sample_ids', 'ct_clip_avg', 'ct_clip_max', 'ct_clip_avgmax']
+[2026-02-26 22:26:34] whole_ct NPZ sample_ids count: 47149
+[2026-02-26 22:26:34] whole_ct from separate NPZ: key=ct_clip_max, shape=torch.Size([47149, 512])
+[2026-02-26 22:26:35] Heterogeneous dims: whole_ct=512, organs=256, max=512
+[2026-02-26 22:26:35] whole_ct aligned: 46407/46407 samples matched
+[2026-02-26 22:26:35] Embedding shapes and dtypes:
+[2026-02-26 22:26:35]   ct_clip_max: shape=torch.Size([46407, 512]), dtype=torch.float32, min=0.0145, max=0.8041
+[2026-02-26 22:26:35]   lung: shape=torch.Size([46407, 512]), dtype=torch.float32, min=-0.2932, max=0.2930
+[2026-02-26 22:26:35]   heart: shape=torch.Size([46407, 512]), dtype=torch.float32, min=-0.2383, max=0.2509
+[2026-02-26 22:26:35]   esophagus: shape=torch.Size([46407, 512]), dtype=torch.float32, min=-0.2325, max=0.2238
+[2026-02-26 22:26:35]   aorta: shape=torch.Size([46407, 512]), dtype=torch.float32, min=-0.2442, max=0.2307
+[2026-02-26 22:26:35] image_to_idx mapping size: 46407
+[2026-02-26 22:26:35] image_to_idx first 5: {'train_6002_a_1': 0, 'train_6002_a_2': 1, 'train_3893_a_2': 2, 'train_3893_a_1': 3, 'train_3020_a_2': 4}
+[2026-02-26 22:26:41] VQA JSON loaded, total items: 693760
+[2026-02-26 22:26:41] VQA first item keys: ['id', 'image', 'conversations']
+[2026-02-26 22:26:41] VQA first item id: long_answer_0
+[2026-02-26 22:26:41] VQA first item image: train_1_a_1.nii.gz
+[2026-02-26 22:26:41] VQA first item conversations count: 8
+[2026-02-26 22:26:41] VQA task breakdown (before filtering): {'long_answer': 280999, 'multiple_choice': 46902, 'short_answer': 318710, 'report_generation': 47149}
+[2026-02-26 22:26:43] WARNING: 742 images not found in NPZ
+[2026-02-26 22:26:43] Missing images (first 10): ['train_39_b_1.nii.gz', 'train_39_b_2.nii.gz', 'train_39_b_4.nii.gz', 'train_47_a_1.nii.gz', 'train_47_a_2.nii.gz', 'train_47_a_4.nii.gz', 'train_55_b_1.nii.gz', 'train_55_b_2.nii.gz', 'train_55_b_4.nii.gz', 'train_144_a_1.nii.gz']
+[2026-02-26 22:26:43] Total samples built (before max_samples): 46407
+[2026-02-26 22:26:43] Task breakdown (after filtering): {'report_generation': 46407}
+[2026-02-26 22:26:43] First sample structure:
+[2026-02-26 22:26:43]   emb_tensor shape: torch.Size([5, 512])
+[2026-02-26 22:26:43]   prompt_text: b'<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\nYou are an experienced radiologist specializing in chest CT interpretation. Generate a detailed findings report covering all anatomical structures.<|eot_id|><|start_header_id|>user<|end_header_id|>\n\nI will provide 5 embeddings from the same CT volume, representing different anatomical regions: whole CT <whole_ct>, lungs <lung>, heart <heart>, esophagus <esophagus>, and aorta <aorta>.\n<report_generation>\nGenerate radiology report for the CT.<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n'
+[2026-02-26 22:26:43]   target_text: b'Findings: Multiple venous collaterals are present in the anterior left chest wall and are associated with the anterior jugular vein at the level of the right sternoclavicular junction. Left subclavian vein collapsed (chronic occlusion pathology?). Trachea, both main bronchi are open. Calcific plaques are observed in the aortic arch. Other mediastinal main vascular structures, heart contour, size are normal. Thoracic aorta diameter is normal. Pericardial effusion-thickening was not observed. Thoracic esophagus calibration was normal and no significant tumoral wall thickening was detected. No enlarged lymph nodes in prevascular, pre-paratracheal, subcarinal or bilateral hilar-axillary pathological dimensions were detected. When examined in the lung parenchyma window; Linear atelectasis is present in both lung parenchyma. Subsegmental atelectasis is observed in the right middle lobe. Thickening of the bronchial wall and peribronchial budding tree-like reticulonodular densities are observed in the bilateral lower lobes. Peribronchial minimal consolidation is seen in the lower lobes in places. The findings were evaluated primarily in favor of the infectious process. The left kidney partially entering the section is atrophic. The right kidney could not be evaluated because it did not enter the section. Other upper abdominal organs included in the sections are normal. No space-occupying lesion was detected in the liver that entered the cross-sectional area. Bilateral adrenal glands were normal and no space-occupying lesion was detected. There are osteophytes with anterior extension in the thoracic vertebrae. Impression:  Multiple venous collaterals in the anterior left chest wall and collapsed appearance in the left subclavian vein (chronic occlusion?).  Thickening of the bronchial wall in both lungs.  Peribronchial reticulonodular densities in the lower lobes, minimal consolidations (infection process?).  Atelectasis in both lungs.  Thoracic spondylosis.<|eot_id|>'
+[2026-02-26 22:26:43]   task_type: report_generation
+[2026-02-26 22:26:43]   sample_id: report_generation_0_turn0
+[2026-02-26 22:26:43]   image: train_1_a_1.nii.gz
+[2026-02-26 22:26:43] ========== ViSDVQADataset.__init__ END ==========
+[2026-02-26 22:26:43] Skipping validation dataset creation
+[2026-02-26 22:26:43] Train samples: 46407
+[2026-02-26 22:26:43] Val samples: 0 (validation skipped)
+[2026-02-26 22:26:43] Optimizer: 1122 params with WD, 0 params without WD
+[2026-02-26 22:26:43] Built ADAMW optimizer: lr=2e-05, wd=0.05
+[2026-02-26 22:26:43] Built warmup+cosine scheduler: warmup=500, total=10000, min_ratio=0.01
+[2026-02-26 22:26:59] Step 10/10000 | train/loss: 1.0979 | train/step: 10.0000 | ETA: 4h 11m | train/gpu_allocated_gb: 167.8610
+[2026-02-26 22:27:13] Step 20/10000 | train/loss: 0.4683 | train/step: 20.0000 | ETA: 4h 8m | train/gpu_allocated_gb: 167.8214
+[2026-02-26 22:27:27] Step 30/10000 | train/loss: 1.0063 | train/step: 30.0000 | ETA: 4h 1m | train/gpu_allocated_gb: 167.7700
+[2026-02-26 22:27:42] Step 40/10000 | train/loss: 0.8611 | train/step: 40.0000 | ETA: 4h 2m | train/gpu_allocated_gb: 160.2213 | train/grad_norm: 1.7578 | train/lr: 2.00e-07
+[2026-02-26 22:27:55] Step 50/10000 | train/loss: 0.6464 | train/step: 50.0000 | ETA: 3h 58m | train/gpu_allocated_gb: 167.8463
+[2026-02-26 22:28:10] Step 60/10000 | train/loss: 0.6309 | train/step: 60.0000 | ETA: 3h 58m | train/gpu_allocated_gb: 167.8697
+[2026-02-26 22:28:24] Step 70/10000 | train/loss: 1.0648 | train/step: 70.0000 | ETA: 3h 56m | train/gpu_allocated_gb: 167.8863
+[2026-02-26 22:28:37] Step 80/10000 | train/loss: 0.6850 | train/step: 80.0000 | ETA: 3h 55m | train/gpu_allocated_gb: 160.2213 | train/grad_norm: 1.8203 | train/lr: 4.00e-07
+[2026-02-26 22:28:51] Step 90/10000 | train/loss: 1.1180 | train/step: 90.0000 | ETA: 3h 53m | train/gpu_allocated_gb: 167.8337
+[2026-02-26 22:29:05] Step 100/10000 | train/loss: 1.0119 | train/step: 100.0000 | ETA: 3h 52m | train/gpu_allocated_gb: 167.8097
+[2026-02-26 22:29:19] Step 110/10000 | train/loss: 1.1296 | train/step: 110.0000 | ETA: 3h 52m | train/gpu_allocated_gb: 167.7878
+[2026-02-26 22:29:34] Step 120/10000 | train/loss: 1.0276 | train/step: 120.0000 | ETA: 3h 51m | train/gpu_allocated_gb: 160.2213 | train/grad_norm: 1.6016 | train/lr: 6.00e-07
+[2026-02-26 22:29:47] Step 130/10000 | train/loss: 1.0313 | train/step: 130.0000 | ETA: 3h 50m | train/gpu_allocated_gb: 167.8768
+[2026-02-26 22:30:01] Step 140/10000 | train/loss: 0.8670 | train/step: 140.0000 | ETA: 3h 49m | train/gpu_allocated_gb: 167.8272
+[2026-02-26 22:30:16] Step 150/10000 | train/loss: 0.8176 | train/step: 150.0000 | ETA: 3h 50m | train/gpu_allocated_gb: 167.7857
+[2026-02-26 22:30:31] Step 160/10000 | train/loss: 0.9821 | train/step: 160.0000 | ETA: 3h 51m | train/gpu_allocated_gb: 160.2213 | train/grad_norm: 1.5469 | train/lr: 8.00e-07
+[2026-02-26 22:30:46] Step 170/10000 | train/loss: 0.8541 | train/step: 170.0000 | ETA: 3h 53m | train/gpu_allocated_gb: 167.7878
+[2026-02-26 22:31:01] Step 180/10000 | train/loss: 0.9967 | train/step: 180.0000 | ETA: 3h 54m | train/gpu_allocated_gb: 167.8343
+[2026-02-26 22:31:15] Step 190/10000 | train/loss: 1.0876 | train/step: 190.0000 | ETA: 3h 56m | train/gpu_allocated_gb: 167.8457
+[2026-02-26 22:31:30] Step 200/10000 | train/loss: 1.0259 | train/step: 200.0000 | ETA: 3h 57m | train/gpu_allocated_gb: 160.2213 | train/grad_norm: 1.4297 | train/lr: 1.00e-06
+[2026-02-26 22:31:45] Step 210/10000 | train/loss: 0.8249 | train/step: 210.0000 | ETA: 3h 57m | train/gpu_allocated_gb: 167.7691
+[2026-02-26 22:31:58] Step 220/10000 | train/loss: 0.9523 | train/step: 220.0000 | ETA: 3h 55m | train/gpu_allocated_gb: 167.8316
+[2026-02-26 22:32:12] Step 230/10000 | train/loss: 0.8191 | train/step: 230.0000 | ETA: 3h 55m | train/gpu_allocated_gb: 167.7750
+[2026-02-26 22:32:27] Step 240/10000 | train/loss: 0.9791 | train/step: 240.0000 | ETA: 3h 56m | train/gpu_allocated_gb: 160.2213 | train/grad_norm: 1.3672 | train/lr: 1.20e-06
+[2026-02-26 22:32:41] Step 250/10000 | train/loss: 1.0444 | train/step: 250.0000 | ETA: 3h 56m | train/gpu_allocated_gb: 167.8432
+[2026-02-26 22:32:56] Step 260/10000 | train/loss: 0.8997 | train/step: 260.0000 | ETA: 3h 56m | train/gpu_allocated_gb: 167.8152
+[2026-02-26 22:33:10] Step 270/10000 | train/loss: 0.7045 | train/step: 270.0000 | ETA: 3h 53m | train/gpu_allocated_gb: 167.8449
+[2026-02-26 22:33:24] Step 280/10000 | train/loss: 0.6989 | train/step: 280.0000 | ETA: 3h 52m | train/gpu_allocated_gb: 160.2213 | train/grad_norm: 1.3906 | train/lr: 1.40e-06
+[2026-02-26 22:33:37] Step 290/10000 | train/loss: 0.9089 | train/step: 290.0000 | ETA: 3h 48m | train/gpu_allocated_gb: 167.8736
+[2026-02-26 22:33:50] Step 300/10000 | train/loss: 1.0487 | train/step: 300.0000 | ETA: 3h 47m | train/gpu_allocated_gb: 167.8045
+[2026-02-26 22:34:04] Step 310/10000 | train/loss: 0.6384 | train/step: 310.0000 | ETA: 3h 45m | train/gpu_allocated_gb: 167.8393
+[2026-02-26 22:34:19] Step 320/10000 | train/loss: 0.7383 | train/step: 320.0000 | ETA: 3h 46m | train/gpu_allocated_gb: 160.2213 | train/grad_norm: 1.3203 | train/lr: 1.60e-06
+[2026-02-26 22:34:32] Step 330/10000 | train/loss: 1.1634 | train/step: 330.0000 | ETA: 3h 46m | train/gpu_allocated_gb: 167.8000
+[2026-02-26 22:34:47] Step 340/10000 | train/loss: 1.0852 | train/step: 340.0000 | ETA: 3h 45m | train/gpu_allocated_gb: 167.8432
+[2026-02-26 22:35:02] Step 350/10000 | train/loss: 1.3042 | train/step: 350.0000 | ETA: 3h 45m | train/gpu_allocated_gb: 167.7961
+[2026-02-26 22:35:14] Step 360/10000 | train/loss: 0.4427 | train/step: 360.0000 | ETA: 3h 40m | train/gpu_allocated_gb: 160.2213 | train/grad_norm: 1.4453 | train/lr: 1.80e-06
+[2026-02-26 22:35:30] Step 370/10000 | train/loss: 0.8070 | train/step: 370.0000 | ETA: 3h 43m | train/gpu_allocated_gb: 167.7822
+[2026-02-26 22:35:43] Step 380/10000 | train/loss: 0.9085 | train/step: 380.0000 | ETA: 3h 42m | train/gpu_allocated_gb: 167.7714
+[2026-02-26 22:35:58] Step 390/10000 | train/loss: 0.9142 | train/step: 390.0000 | ETA: 3h 46m | train/gpu_allocated_gb: 167.8651
+[2026-02-26 22:36:12] Step 400/10000 | train/loss: 0.9415 | train/step: 400.0000 | ETA: 3h 46m | train/gpu_allocated_gb: 160.2213 | train/grad_norm: 1.3594 | train/lr: 2.00e-06
+[2026-02-26 22:36:26] Step 410/10000 | train/loss: 0.9945 | train/step: 410.0000 | ETA: 3h 47m | train/gpu_allocated_gb: 167.7822
+[2026-02-26 22:36:40] Step 420/10000 | train/loss: 1.1019 | train/step: 420.0000 | ETA: 3h 46m | train/gpu_allocated_gb: 167.8918
+[2026-02-26 22:36:56] Step 430/10000 | train/loss: 0.7960 | train/step: 430.0000 | ETA: 3h 49m | train/gpu_allocated_gb: 167.8331
+[2026-02-26 22:37:10] Step 440/10000 | train/loss: 0.9202 | train/step: 440.0000 | ETA: 3h 48m | train/gpu_allocated_gb: 160.2213 | train/grad_norm: 1.3750 | train/lr: 2.20e-06
+[2026-02-26 22:37:25] Step 450/10000 | train/loss: 0.9779 | train/step: 450.0000 | ETA: 3h 47m | train/gpu_allocated_gb: 167.8197
+[2026-02-26 22:37:40] Step 460/10000 | train/loss: 1.1325 | train/step: 460.0000 | ETA: 3h 51m | train/gpu_allocated_gb: 167.8647
+[2026-02-26 22:37:55] Step 470/10000 | train/loss: 0.6246 | train/step: 470.0000 | ETA: 3h 50m | train/gpu_allocated_gb: 167.8043
+[2026-02-26 22:38:08] Step 480/10000 | train/loss: 0.6291 | train/step: 480.0000 | ETA: 3h 51m | train/gpu_allocated_gb: 160.2213 | train/grad_norm: 1.4375 | train/lr: 2.40e-06
+[2026-02-26 22:38:23] Step 490/10000 | train/loss: 0.9804 | train/step: 490.0000 | ETA: 3h 49m | train/gpu_allocated_gb: 167.8965
+[2026-02-26 22:38:37] Step 500/10000 | train/loss: 1.0600 | train/step: 500.0000 | ETA: 3h 48m | train/gpu_allocated_gb: 167.7707
+[2026-02-26 22:39:17] 💾 Saved PEFT checkpoint: results/base_model/E43_70b_sft/checkpoints/step_500 (LoRA=1120, embed/lm_head=2, projector=20)
+[2026-02-26 22:39:30] Step 510/10000 | train/loss: 0.8344 | train/step: 510.0000 | ETA: 4h 50m | train/gpu_allocated_gb: 167.8462
+[2026-02-26 22:39:45] Step 520/10000 | train/loss: 0.6556 | train/step: 520.0000 | ETA: 4h 52m | train/gpu_allocated_gb: 160.2213 | train/grad_norm: 1.4922 | train/lr: 2.60e-06
+[2026-02-26 22:39:59] Step 530/10000 | train/loss: 0.6325 | train/step: 530.0000 | ETA: 4h 49m | train/gpu_allocated_gb: 167.8343
+[2026-02-26 22:40:13] Step 540/10000 | train/loss: 0.7501 | train/step: 540.0000 | ETA: 4h 48m | train/gpu_allocated_gb: 167.8053
+[2026-02-26 22:40:27] Step 550/10000 | train/loss: 1.4028 | train/step: 550.0000 | ETA: 4h 47m | train/gpu_allocated_gb: 167.8768
+[2026-02-26 22:40:41] Step 560/10000 | train/loss: 0.6693 | train/step: 560.0000 | ETA: 4h 44m | train/gpu_allocated_gb: 160.2213 | train/grad_norm: 1.3359 | train/lr: 2.80e-06
+[2026-02-26 22:40:53] Step 570/10000 | train/loss: 0.4188 | train/step: 570.0000 | ETA: 4h 40m | train/gpu_allocated_gb: 167.7971
+[2026-02-26 22:41:07] Step 580/10000 | train/loss: 0.9638 | train/step: 580.0000 | ETA: 4h 39m | train/gpu_allocated_gb: 167.8564
+[2026-02-26 22:41:21] Step 590/10000 | train/loss: 1.0134 | train/step: 590.0000 | ETA: 4h 40m | train/gpu_allocated_gb: 167.7711
+[2026-02-26 22:41:35] Step 600/10000 | train/loss: 0.8852 | train/step: 600.0000 | ETA: 4h 39m | train/gpu_allocated_gb: 160.2213 | train/grad_norm: 1.7656 | train/lr: 3.00e-06
+[2026-02-26 22:41:51] Step 610/10000 | train/loss: 0.7100 | train/step: 610.0000 | ETA: 3h 40m | train/gpu_allocated_gb: 167.8697
+[2026-02-26 22:42:04] Step 620/10000 | train/loss: 0.6968 | train/step: 620.0000 | ETA: 3h 36m | train/gpu_allocated_gb: 167.8404
+[2026-02-26 22:42:17] Step 630/10000 | train/loss: 1.0220 | train/step: 630.0000 | ETA: 3h 35m | train/gpu_allocated_gb: 167.8230
+[2026-02-26 22:42:32] Step 640/10000 | train/loss: 0.7481 | train/step: 640.0000 | ETA: 3h 36m | train/gpu_allocated_gb: 160.2213 | train/grad_norm: 1.3672 | train/lr: 3.20e-06
+[2026-02-26 22:42:46] Step 650/10000 | train/loss: 0.8370 | train/step: 650.0000 | ETA: 3h 35m | train/gpu_allocated_gb: 167.8337
+[2026-02-26 22:42:59] Step 660/10000 | train/loss: 0.5795 | train/step: 660.0000 | ETA: 3h 36m | train/gpu_allocated_gb: 167.8929
+[2026-02-26 22:43:12] Step 670/10000 | train/loss: 0.6385 | train/step: 670.0000 | ETA: 3h 36m | train/gpu_allocated_gb: 167.8461
+[2026-02-26 22:43:26] Step 680/10000 | train/loss: 0.7293 | train/step: 680.0000 | ETA: 3h 36m | train/gpu_allocated_gb: 160.2213 | train/grad_norm: 1.5000 | train/lr: 3.40e-06
+[2026-02-26 22:43:41] Step 690/10000 | train/loss: 1.0508 | train/step: 690.0000 | ETA: 3h 36m | train/gpu_allocated_gb: 167.8628
+[2026-02-26 22:43:56] Step 700/10000 | train/loss: 0.9537 | train/step: 700.0000 | ETA: 3h 38m | train/gpu_allocated_gb: 167.8323
+[2026-02-26 22:44:12] Step 710/10000 | train/loss: 0.6955 | train/step: 710.0000 | ETA: 3h 38m | train/gpu_allocated_gb: 167.7979
+[2026-02-26 22:44:24] Step 720/10000 | train/loss: 0.9629 | train/step: 720.0000 | ETA: 3h 36m | train/gpu_allocated_gb: 160.2213 | train/grad_norm: 1.7656 | train/lr: 3.60e-06
+[2026-02-26 22:44:38] Step 730/10000 | train/loss: 0.7852 | train/step: 730.0000 | ETA: 3h 39m | train/gpu_allocated_gb: 167.7750
+[2026-02-26 22:44:52] Step 740/10000 | train/loss: 0.5113 | train/step: 740.0000 | ETA: 3h 36m | train/gpu_allocated_gb: 167.7726
+[2026-02-26 22:45:07] Step 750/10000 | train/loss: 0.6259 | train/step: 750.0000 | ETA: 3h 38m | train/gpu_allocated_gb: 167.7693
+[2026-02-26 22:45:22] Step 760/10000 | train/loss: 0.7964 | train/step: 760.0000 | ETA: 3h 40m | train/gpu_allocated_gb: 160.2213 | train/grad_norm: 1.5000 | train/lr: 3.80e-06
+[2026-02-26 22:45:37] Step 770/10000 | train/loss: 0.7471 | train/step: 770.0000 | ETA: 3h 42m | train/gpu_allocated_gb: 167.8281
+[2026-02-26 22:45:53] Step 780/10000 | train/loss: 0.5074 | train/step: 780.0000 | ETA: 3h 45m | train/gpu_allocated_gb: 167.8393
+[2026-02-26 22:46:07] Step 790/10000 | train/loss: 1.2485 | train/step: 790.0000 | ETA: 3h 43m | train/gpu_allocated_gb: 167.8123
+[2026-02-26 22:46:23] Step 800/10000 | train/loss: 1.2275 | train/step: 800.0000 | ETA: 3h 44m | train/gpu_allocated_gb: 160.2213 | train/grad_norm: 1.5391 | train/lr: 4.00e-06
+[2026-02-26 22:46:37] Step 810/10000 | train/loss: 0.9226 | train/step: 810.0000 | ETA: 3h 42m | train/gpu_allocated_gb: 167.7964
+[2026-02-26 22:46:52] Step 820/10000 | train/loss: 0.8373 | train/step: 820.0000 | ETA: 3h 45m | train/gpu_allocated_gb: 167.7623
+[2026-02-26 22:47:08] Step 830/10000 | train/loss: 0.6044 | train/step: 830.0000 | ETA: 3h 48m | train/gpu_allocated_gb: 167.8106
+[2026-02-26 22:47:22] Step 840/10000 | train/loss: 0.6978 | train/step: 840.0000 | ETA: 3h 48m | train/gpu_allocated_gb: 160.2213 | train/grad_norm: 1.3047 | train/lr: 4.20e-06
+[2026-02-26 22:47:37] Step 850/10000 | train/loss: 0.6413 | train/step: 850.0000 | ETA: 3h 48m | train/gpu_allocated_gb: 167.8156
+[2026-02-26 22:47:51] Step 860/10000 | train/loss: 0.7158 | train/step: 860.0000 | ETA: 3h 45m | train/gpu_allocated_gb: 167.8627
+[2026-02-26 22:48:06] Step 870/10000 | train/loss: 0.7530 | train/step: 870.0000 | ETA: 3h 46m | train/gpu_allocated_gb: 167.7698
+[2026-02-26 22:48:19] Step 880/10000 | train/loss: 0.8646 | train/step: 880.0000 | ETA: 3h 42m | train/gpu_allocated_gb: 160.2213 | train/grad_norm: 1.4375 | train/lr: 4.40e-06
+[2026-02-26 22:48:35] Step 890/10000 | train/loss: 0.6816 | train/step: 890.0000 | ETA: 3h 44m | train/gpu_allocated_gb: 167.8159
+[2026-02-26 22:48:49] Step 900/10000 | train/loss: 0.8494 | train/step: 900.0000 | ETA: 3h 42m | train/gpu_allocated_gb: 167.8912
+[2026-02-26 22:49:04] Step 910/10000 | train/loss: 1.3540 | train/step: 910.0000 | ETA: 3h 43m | train/gpu_allocated_gb: 167.8582
+[2026-02-26 22:49:18] Step 920/10000 | train/loss: 0.6944 | train/step: 920.0000 | ETA: 3h 41m | train/gpu_allocated_gb: 160.2213 | train/grad_norm: 1.3672 | train/lr: 4.60e-06
+[2026-02-26 22:49:33] Step 930/10000 | train/loss: 1.0147 | train/step: 930.0000 | ETA: 3h 39m | train/gpu_allocated_gb: 167.7984
+[2026-02-26 22:49:48] Step 940/10000 | train/loss: 0.8766 | train/step: 940.0000 | ETA: 3h 39m | train/gpu_allocated_gb: 167.8671
+[2026-02-26 22:50:04] Step 950/10000 | train/loss: 0.9301 | train/step: 950.0000 | ETA: 3h 41m | train/gpu_allocated_gb: 167.8425
+[2026-02-26 22:50:19] Step 960/10000 | train/loss: 1.0735 | train/step: 960.0000 | ETA: 3h 43m | train/gpu_allocated_gb: 160.2213 | train/grad_norm: 1.4141 | train/lr: 4.80e-06
+[2026-02-26 22:50:34] Step 970/10000 | train/loss: 0.7108 | train/step: 970.0000 | ETA: 3h 43m | train/gpu_allocated_gb: 167.8459
+[2026-02-26 22:50:49] Step 980/10000 | train/loss: 0.8523 | train/step: 980.0000 | ETA: 3h 45m | train/gpu_allocated_gb: 167.8257
+================================================================================
+Configuration:
+================================================================================
+experiment:
+  name: E43_70b_sft
+  seed: 42
+  run_name: E43_70b_sft_20260227_014931
+device:
+  type: cuda
+paths:
+  output_dir: results/base_model/E43_70b_sft
+  checkpoint_dir: results/base_model/E43_70b_sft/checkpoints
+model:
+  model_path: /orange/xujie/liang.renjie/DATA/weights/Llama-3.3-70B-Instruct
+  model_name: llava-llama
+  use_flash_attn: False
+  gradient_checkpointing: True
+  train_projector_only: False
+  pretrain_checkpoint: ./results/base_model/E42_70b_projector/checkpoints/step_9000
+  freeze_projector: True
+  lora_r: 64
+  lora_alpha: 128
+  lora_dropout: 0.05
+  lora_target_modules: ['down_proj', 'gate_proj', 'k_proj', 'o_proj', 'q_proj', 'up_proj', 'v_proj']
+  projector_type: independent
+  projector_layers: 2
+  tokens_per_embedding: 1
+data:
+  train_embeddings_npz: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/ViSD-Boost-embeds/train_embeds.npz
+  val_embeddings_npz: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/ViSD-Boost-embeds/valid_embeds.npz
+  whole_ct_key: ct_clip_max
+  whole_ct_dim: 512
+  whole_ct_embeddings_npz_train: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/CT-CLIP-embeds/train_embeds.npz
+  whole_ct_embeddings_npz_val: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/CT-CLIP-embeds/valid_embeds.npz
+  organ_keys: ['lung', 'heart', 'esophagus', 'aorta']
+  train_vqa_json: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/vqa/train_vqa.json
+  val_vqa_json: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/vqa/valid_vqa.json
+  sample_types: ['image']
+  train_tasks: ['report_generation']
+  batch_size: 4
+  num_workers: 4
+  use_chat_template: True
+  system_prompt: detailed
+training:
+  max_steps: 10000
+  save_every: 500
+  optimizer:
+    type: adamw
+    lr: 2e-05
+    weight_decay: 0.05
+    betas: [0.9, 0.999]
+    eps: 1e-08
+    separate_wd_groups: True
+  scheduler:
+    type: warmup_cosine
+    warmup_steps: 500
+    min_lr_ratio: 0.01
+  grad_accum_steps: 8
+  max_seq_length_by_task:
+    report_generation: 2048
+  use_amp: True
+  label_smoothing: 0.0
+validation:
+  skip_validation: True
+  max_new_tokens_by_task:
+    report_generation: 512
+  temperature: 0.7
+  top_p: 0.95
+  top_k: 50
+  repetition_penalty: 1.1
+checkpoint:
+  keep_last_n: 20
+logging:
+  use_console: True
+  log_every: 10
+generation:
+  temperature: 0.7
+  top_p: 0.95
+  top_k: 50
+  repetition_penalty: 1.1
+================================================================================
+[2026-02-27 01:49:31] ================================================================================
+[2026-02-27 01:49:31] Stage 3 Turn: LLaVA Report Generation Training
+[2026-02-27 01:49:31] ================================================================================
+[2026-02-27 01:49:31] 🤖 Loading base model: llava-llama
+[2026-02-27 01:49:31] 📂 Model path: /orange/xujie/liang.renjie/DATA/weights/Llama-3.3-70B-Instruct
+[2026-02-27 01:49:31] ⚡ Flash attention: False
+[2026-02-27 01:49:31] 💾 Quantization: 8bit=False, 4bit=False
+[2026-02-27 01:51:09] ✅ Base model loaded successfully
+[2026-02-27 01:51:09] 📊 Model config: hidden_size=8192, vocab_size=128257
+[2026-02-27 01:51:09] 🔤 Tokenizer vocab size: 128257
+[2026-02-27 01:51:09] 🔧 Per-organ input dims: {'whole_ct': 512, 'lung': 256, 'heart': 256, 'esophagus': 256, 'aorta': 256}
+[2026-02-27 01:51:11] 🔧 Projector: independent (5 MLPs), 2-layer, per-organ dims={'whole_ct': 512, 'lung': 256, 'heart': 256, 'esophagus': 256, 'aorta': 256}, tokens_per_embedding=1
+[2026-02-27 01:51:11] 🔧 Projector initialized: 256 -> 8192
+[2026-02-27 01:51:11] 📦 Loaded projector.pt from merged dir: 20 keys
+[2026-02-27 01:51:11] 🎯 Added 4 task tokens + 5 organ tokens + 1 provided token
+[2026-02-27 01:51:11] 🔤 Final tokenizer vocab size: 128267
+[2026-02-27 01:51:11] 📋 Using config-specified target modules: ['down_proj', 'gate_proj', 'k_proj', 'o_proj', 'q_proj', 'up_proj', 'v_proj']
+[2026-02-27 01:51:22] 🎯 Training mode: LoRA fine-tuning
+[2026-02-27 01:51:22] 🔧 LoRA config: r=64, alpha=128, dropout=0.05
+[2026-02-27 01:51:22] 🎯 Target modules (7): ['down_proj', 'gate_proj', 'k_proj', 'o_proj', 'q_proj', 'up_proj', 'v_proj']
+[2026-02-27 01:51:22] 🔒 Projector FROZEN (freeze_projector=True)
+[2026-02-27 01:51:22] 📈 Training summary:
+[2026-02-27 01:51:22]    🎯 Total parameters: 71730.47M
+[2026-02-27 01:51:22]    🔥 Trainable parameters: 2929.90M (4.1%)
+[2026-02-27 01:51:22]    📱 Device: cuda, dtype: torch.bfloat16
+[2026-02-27 01:51:22] Total parameters: 71730.47M
+[2026-02-27 01:51:22] Trainable parameters: 2929.90M
+[2026-02-27 01:51:22] ========== ViSDVQADataset.__init__ START ==========
+[2026-02-27 01:51:22] embeddings_npz: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/ViSD-Boost-embeds/train_embeds.npz
+[2026-02-27 01:51:22] vqa_json_path: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/vqa/train_vqa.json
+[2026-02-27 01:51:22] train_tasks: ['report_generation']
+[2026-02-27 01:51:22] max_samples: None
+[2026-02-27 01:51:22] sample_types: ['image']
+[2026-02-27 01:51:22] use_chat_template: True
+[2026-02-27 01:51:22] system_prompt: detailed
+[2026-02-27 01:51:22] whole_ct_npz: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/CT-CLIP-embeds/train_embeds.npz
+[2026-02-27 01:51:22] whole_ct_dim: 512
+[2026-02-27 01:51:22] oversample_rare_findings: False (min_positives=3, factor=3.0)
+[2026-02-27 01:51:22] label_in_prompt: False (csv=None)
+[2026-02-27 01:51:22] organ_report_mode: None (json=None, single_organ_ratio=0.4)
+[2026-02-27 01:51:22] Resolved system_prompt: You are an experienced radiologist specializing in chest CT interpretation. Generate a detailed findings report covering all anatomical structures.
+[2026-02-27 01:51:22] Allowed tasks set: {'report_generation'}
+[2026-02-27 01:51:22] embedding_keys (NPZ): ['ct_clip_max', 'lung', 'heart', 'esophagus', 'aorta']
+[2026-02-27 01:51:23] NPZ keys: ['sample_ids', 'whole_ct_attention', 'whole_ct_weighted', 'lung', 'heart', 'esophagus', 'aorta']
+[2026-02-27 01:51:23] NPZ sample_ids count: 46407
+[2026-02-27 01:51:23] NPZ sample_ids first 5: ['train_6002_a_1.nii.gz', 'train_6002_a_2.nii.gz', 'train_3893_a_2.nii.gz', 'train_3893_a_1.nii.gz', 'train_3020_a_2.nii.gz']
+[2026-02-27 01:51:23] Separate whole_ct NPZ keys: ['sample_ids', 'ct_clip_avg', 'ct_clip_max', 'ct_clip_avgmax']
+[2026-02-27 01:51:23] whole_ct NPZ sample_ids count: 47149
+[2026-02-27 01:51:23] whole_ct from separate NPZ: key=ct_clip_max, shape=torch.Size([47149, 512])
+[2026-02-27 01:51:24] Heterogeneous dims: whole_ct=512, organs=256, max=512
+[2026-02-27 01:51:24] whole_ct aligned: 46407/46407 samples matched
+[2026-02-27 01:51:24] Embedding shapes and dtypes:
+[2026-02-27 01:51:24]   ct_clip_max: shape=torch.Size([46407, 512]), dtype=torch.float32, min=0.0145, max=0.8041
+[2026-02-27 01:51:24]   lung: shape=torch.Size([46407, 512]), dtype=torch.float32, min=-0.2932, max=0.2930
+[2026-02-27 01:51:24]   heart: shape=torch.Size([46407, 512]), dtype=torch.float32, min=-0.2383, max=0.2509
+[2026-02-27 01:51:24]   esophagus: shape=torch.Size([46407, 512]), dtype=torch.float32, min=-0.2325, max=0.2238
+[2026-02-27 01:51:24]   aorta: shape=torch.Size([46407, 512]), dtype=torch.float32, min=-0.2442, max=0.2307
+[2026-02-27 01:51:24] image_to_idx mapping size: 46407
+[2026-02-27 01:51:24] image_to_idx first 5: {'train_6002_a_1': 0, 'train_6002_a_2': 1, 'train_3893_a_2': 2, 'train_3893_a_1': 3, 'train_3020_a_2': 4}
+[2026-02-27 01:51:30] VQA JSON loaded, total items: 693760
+[2026-02-27 01:51:30] VQA first item keys: ['id', 'image', 'conversations']
+[2026-02-27 01:51:30] VQA first item id: long_answer_0
+[2026-02-27 01:51:30] VQA first item image: train_1_a_1.nii.gz
+[2026-02-27 01:51:30] VQA first item conversations count: 8
+[2026-02-27 01:51:31] VQA task breakdown (before filtering): {'long_answer': 280999, 'multiple_choice': 46902, 'short_answer': 318710, 'report_generation': 47149}
+[2026-02-27 01:51:33] WARNING: 742 images not found in NPZ
+[2026-02-27 01:51:33] Missing images (first 10): ['train_39_b_1.nii.gz', 'train_39_b_2.nii.gz', 'train_39_b_4.nii.gz', 'train_47_a_1.nii.gz', 'train_47_a_2.nii.gz', 'train_47_a_4.nii.gz', 'train_55_b_1.nii.gz', 'train_55_b_2.nii.gz', 'train_55_b_4.nii.gz', 'train_144_a_1.nii.gz']
+[2026-02-27 01:51:33] Total samples built (before max_samples): 46407
+[2026-02-27 01:51:33] Task breakdown (after filtering): {'report_generation': 46407}
+[2026-02-27 01:51:33] First sample structure:
+[2026-02-27 01:51:33]   emb_tensor shape: torch.Size([5, 512])
+[2026-02-27 01:51:33]   prompt_text: b'<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\nYou are an experienced radiologist specializing in chest CT interpretation. Generate a detailed findings report covering all anatomical structures.<|eot_id|><|start_header_id|>user<|end_header_id|>\n\nI will provide 5 embeddings from the same CT volume, representing different anatomical regions: whole CT <whole_ct>, lungs <lung>, heart <heart>, esophagus <esophagus>, and aorta <aorta>.\n<report_generation>\nGenerate radiology report for the CT.<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n'
+[2026-02-27 01:51:33]   target_text: b'Findings: Multiple venous collaterals are present in the anterior left chest wall and are associated with the anterior jugular vein at the level of the right sternoclavicular junction. Left subclavian vein collapsed (chronic occlusion pathology?). Trachea, both main bronchi are open. Calcific plaques are observed in the aortic arch. Other mediastinal main vascular structures, heart contour, size are normal. Thoracic aorta diameter is normal. Pericardial effusion-thickening was not observed. Thoracic esophagus calibration was normal and no significant tumoral wall thickening was detected. No enlarged lymph nodes in prevascular, pre-paratracheal, subcarinal or bilateral hilar-axillary pathological dimensions were detected. When examined in the lung parenchyma window; Linear atelectasis is present in both lung parenchyma. Subsegmental atelectasis is observed in the right middle lobe. Thickening of the bronchial wall and peribronchial budding tree-like reticulonodular densities are observed in the bilateral lower lobes. Peribronchial minimal consolidation is seen in the lower lobes in places. The findings were evaluated primarily in favor of the infectious process. The left kidney partially entering the section is atrophic. The right kidney could not be evaluated because it did not enter the section. Other upper abdominal organs included in the sections are normal. No space-occupying lesion was detected in the liver that entered the cross-sectional area. Bilateral adrenal glands were normal and no space-occupying lesion was detected. There are osteophytes with anterior extension in the thoracic vertebrae. Impression:  Multiple venous collaterals in the anterior left chest wall and collapsed appearance in the left subclavian vein (chronic occlusion?).  Thickening of the bronchial wall in both lungs.  Peribronchial reticulonodular densities in the lower lobes, minimal consolidations (infection process?).  Atelectasis in both lungs.  Thoracic spondylosis.<|eot_id|>'
+[2026-02-27 01:51:33]   task_type: report_generation
+[2026-02-27 01:51:33]   sample_id: report_generation_0_turn0
+[2026-02-27 01:51:33]   image: train_1_a_1.nii.gz
+[2026-02-27 01:51:33] ========== ViSDVQADataset.__init__ END ==========
+[2026-02-27 01:51:33] Skipping validation dataset creation
+[2026-02-27 01:51:33] Train samples: 46407
+[2026-02-27 01:51:33] Val samples: 0 (validation skipped)
+[2026-02-27 01:51:33] Optimizer: 1122 params with WD, 0 params without WD
+[2026-02-27 01:51:33] Built ADAMW optimizer: lr=2e-05, wd=0.05
+[2026-02-27 01:51:33] Built warmup+cosine scheduler: warmup=500, total=10000, min_ratio=0.01
+[2026-02-27 01:51:49] Step 10/10000 | train/loss: 0.5311 | train/step: 10.0000 | ETA: 4h 25m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 01:52:04] Step 20/10000 | train/loss: 1.1591 | train/step: 20.0000 | ETA: 4h 16m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 01:52:18] Step 30/10000 | train/loss: 1.0411 | train/step: 30.0000 | ETA: 4h 9m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 01:52:33] Step 40/10000 | train/loss: 0.8198 | train/step: 40.0000 | ETA: 4h 8m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.4922 | train/lr: 2.00e-07
+[2026-02-27 01:52:49] Step 50/10000 | train/loss: 0.8536 | train/step: 50.0000 | ETA: 4h 11m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 01:53:05] Step 60/10000 | train/loss: 1.1407 | train/step: 60.0000 | ETA: 4h 13m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 01:53:21] Step 70/10000 | train/loss: 1.0813 | train/step: 70.0000 | ETA: 4h 13m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 01:53:35] Step 80/10000 | train/loss: 0.9483 | train/step: 80.0000 | ETA: 4h 11m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.5703 | train/lr: 4.00e-07
+[2026-02-27 01:53:49] Step 90/10000 | train/loss: 0.9913 | train/step: 90.0000 | ETA: 4h 9m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 01:54:04] Step 100/10000 | train/loss: 1.1391 | train/step: 100.0000 | ETA: 4h 8m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 01:54:19] Step 110/10000 | train/loss: 0.6248 | train/step: 110.0000 | ETA: 4h 6m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 01:54:34] Step 120/10000 | train/loss: 0.6413 | train/step: 120.0000 | ETA: 4h 7m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.4531 | train/lr: 6.00e-07
+[2026-02-27 01:54:48] Step 130/10000 | train/loss: 0.9379 | train/step: 130.0000 | ETA: 4h 5m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 01:55:01] Step 140/10000 | train/loss: 0.6086 | train/step: 140.0000 | ETA: 4h 2m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 01:55:15] Step 150/10000 | train/loss: 0.9481 | train/step: 150.0000 | ETA: 4h 0m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 01:55:32] Step 160/10000 | train/loss: 1.0313 | train/step: 160.0000 | ETA: 4h 1m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.3906 | train/lr: 8.00e-07
+[2026-02-27 01:55:48] Step 170/10000 | train/loss: 1.2008 | train/step: 170.0000 | ETA: 4h 2m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 01:56:05] Step 180/10000 | train/loss: 1.0747 | train/step: 180.0000 | ETA: 4h 5m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 01:56:18] Step 190/10000 | train/loss: 0.9333 | train/step: 190.0000 | ETA: 4h 3m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 01:56:33] Step 200/10000 | train/loss: 1.3140 | train/step: 200.0000 | ETA: 4h 2m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2578 | train/lr: 1.00e-06
+[2026-02-27 01:56:46] Step 210/10000 | train/loss: 0.9794 | train/step: 210.0000 | ETA: 4h 0m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 01:57:01] Step 220/10000 | train/loss: 1.2514 | train/step: 220.0000 | ETA: 3h 58m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 01:57:15] Step 230/10000 | train/loss: 0.7935 | train/step: 230.0000 | ETA: 3h 59m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 01:57:28] Step 240/10000 | train/loss: 0.7233 | train/step: 240.0000 | ETA: 3h 58m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.5234 | train/lr: 1.20e-06
+[2026-02-27 01:57:43] Step 250/10000 | train/loss: 1.0324 | train/step: 250.0000 | ETA: 3h 59m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 01:57:59] Step 260/10000 | train/loss: 1.1163 | train/step: 260.0000 | ETA: 3h 57m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 01:58:13] Step 270/10000 | train/loss: 1.3346 | train/step: 270.0000 | ETA: 3h 54m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 01:58:26] Step 280/10000 | train/loss: 0.6677 | train/step: 280.0000 | ETA: 3h 48m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.3594 | train/lr: 1.40e-06
+[2026-02-27 01:58:41] Step 290/10000 | train/loss: 0.7612 | train/step: 290.0000 | ETA: 3h 50m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 01:58:56] Step 300/10000 | train/loss: 0.9128 | train/step: 300.0000 | ETA: 3h 52m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 01:59:12] Step 310/10000 | train/loss: 1.3242 | train/step: 310.0000 | ETA: 3h 54m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 01:59:28] Step 320/10000 | train/loss: 1.1962 | train/step: 320.0000 | ETA: 3h 58m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.3359 | train/lr: 1.60e-06
+[2026-02-27 01:59:43] Step 330/10000 | train/loss: 0.8635 | train/step: 330.0000 | ETA: 3h 58m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 01:59:56] Step 340/10000 | train/loss: 0.8608 | train/step: 340.0000 | ETA: 3h 58m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:00:10] Step 350/10000 | train/loss: 1.1032 | train/step: 350.0000 | ETA: 3h 56m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:00:23] Step 360/10000 | train/loss: 0.8499 | train/step: 360.0000 | ETA: 3h 51m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2656 | train/lr: 1.80e-06
+[2026-02-27 02:00:38] Step 370/10000 | train/loss: 0.8155 | train/step: 370.0000 | ETA: 3h 51m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:00:54] Step 380/10000 | train/loss: 0.9168 | train/step: 380.0000 | ETA: 3h 56m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:01:09] Step 390/10000 | train/loss: 0.9529 | train/step: 390.0000 | ETA: 3h 56m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:01:23] Step 400/10000 | train/loss: 0.8197 | train/step: 400.0000 | ETA: 3h 54m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2656 | train/lr: 2.00e-06
+[2026-02-27 02:01:39] Step 410/10000 | train/loss: 1.1263 | train/step: 410.0000 | ETA: 3h 55m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:01:53] Step 420/10000 | train/loss: 1.1902 | train/step: 420.0000 | ETA: 3h 50m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:02:08] Step 430/10000 | train/loss: 1.1487 | train/step: 430.0000 | ETA: 3h 51m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:02:23] Step 440/10000 | train/loss: 0.7500 | train/step: 440.0000 | ETA: 3h 54m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2500 | train/lr: 2.20e-06
+[2026-02-27 02:02:37] Step 450/10000 | train/loss: 0.8648 | train/step: 450.0000 | ETA: 3h 54m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:02:51] Step 460/10000 | train/loss: 0.5644 | train/step: 460.0000 | ETA: 3h 56m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:03:05] Step 470/10000 | train/loss: 0.7822 | train/step: 470.0000 | ETA: 3h 53m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:03:20] Step 480/10000 | train/loss: 1.0008 | train/step: 480.0000 | ETA: 3h 52m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2578 | train/lr: 2.40e-06
+[2026-02-27 02:03:35] Step 490/10000 | train/loss: 0.7551 | train/step: 490.0000 | ETA: 3h 52m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:03:48] Step 500/10000 | train/loss: 0.4597 | train/step: 500.0000 | ETA: 3h 48m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:04:33] 💾 Saved PEFT checkpoint: results/base_model/E43_70b_sft/checkpoints/step_500 (LoRA=1120, embed/lm_head=2, projector=20)
+[2026-02-27 02:04:46] Step 510/10000 | train/loss: 1.0674 | train/step: 510.0000 | ETA: 4h 56m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:05:02] Step 520/10000 | train/loss: 0.6616 | train/step: 520.0000 | ETA: 4h 58m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2344 | train/lr: 2.60e-06
+[2026-02-27 02:05:16] Step 530/10000 | train/loss: 1.1011 | train/step: 530.0000 | ETA: 4h 57m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:05:32] Step 540/10000 | train/loss: 0.6847 | train/step: 540.0000 | ETA: 4h 58m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:05:47] Step 550/10000 | train/loss: 0.9672 | train/step: 550.0000 | ETA: 4h 59m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:06:00] Step 560/10000 | train/loss: 0.6714 | train/step: 560.0000 | ETA: 4h 56m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2891 | train/lr: 2.80e-06
+[2026-02-27 02:06:18] Step 570/10000 | train/loss: 0.8684 | train/step: 570.0000 | ETA: 5h 3m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:06:33] Step 580/10000 | train/loss: 1.2366 | train/step: 580.0000 | ETA: 5h 3m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:06:48] Step 590/10000 | train/loss: 1.1653 | train/step: 590.0000 | ETA: 5h 2m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:07:01] Step 600/10000 | train/loss: 0.9222 | train/step: 600.0000 | ETA: 5h 3m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2891 | train/lr: 3.00e-06
+[2026-02-27 02:07:18] Step 610/10000 | train/loss: 0.7405 | train/step: 610.0000 | ETA: 3h 57m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:07:35] Step 620/10000 | train/loss: 1.1837 | train/step: 620.0000 | ETA: 3h 59m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:07:51] Step 630/10000 | train/loss: 0.8612 | train/step: 630.0000 | ETA: 4h 1m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:08:07] Step 640/10000 | train/loss: 1.0920 | train/step: 640.0000 | ETA: 4h 1m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2891 | train/lr: 3.20e-06
+[2026-02-27 02:08:20] Step 650/10000 | train/loss: 1.0083 | train/step: 650.0000 | ETA: 3h 58m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:08:33] Step 660/10000 | train/loss: 0.7820 | train/step: 660.0000 | ETA: 3h 58m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:08:48] Step 670/10000 | train/loss: 1.0214 | train/step: 670.0000 | ETA: 3h 54m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:09:06] Step 680/10000 | train/loss: 0.8129 | train/step: 680.0000 | ETA: 3h 57m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.3047 | train/lr: 3.40e-06
+[2026-02-27 02:09:22] Step 690/10000 | train/loss: 0.4947 | train/step: 690.0000 | ETA: 3h 59m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:09:36] Step 700/10000 | train/loss: 0.7667 | train/step: 700.0000 | ETA: 4h 0m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:09:51] Step 710/10000 | train/loss: 0.7406 | train/step: 710.0000 | ETA: 3h 56m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:10:07] Step 720/10000 | train/loss: 1.2519 | train/step: 720.0000 | ETA: 3h 55m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.3281 | train/lr: 3.60e-06
+[2026-02-27 02:10:22] Step 730/10000 | train/loss: 1.0984 | train/step: 730.0000 | ETA: 3h 52m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:10:35] Step 740/10000 | train/loss: 1.0513 | train/step: 740.0000 | ETA: 3h 48m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:10:49] Step 750/10000 | train/loss: 0.5169 | train/step: 750.0000 | ETA: 3h 49m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:11:03] Step 760/10000 | train/loss: 0.9493 | train/step: 760.0000 | ETA: 3h 50m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.3594 | train/lr: 3.80e-06
+[2026-02-27 02:11:20] Step 770/10000 | train/loss: 1.2964 | train/step: 770.0000 | ETA: 3h 53m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:11:33] Step 780/10000 | train/loss: 0.8066 | train/step: 780.0000 | ETA: 3h 45m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:11:47] Step 790/10000 | train/loss: 0.6462 | train/step: 790.0000 | ETA: 3h 42m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:12:00] Step 800/10000 | train/loss: 0.7675 | train/step: 800.0000 | ETA: 3h 40m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2812 | train/lr: 4.00e-06
+[2026-02-27 02:12:16] Step 810/10000 | train/loss: 1.0230 | train/step: 810.0000 | ETA: 3h 43m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:12:33] Step 820/10000 | train/loss: 0.9435 | train/step: 820.0000 | ETA: 3h 43m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:12:50] Step 830/10000 | train/loss: 0.5973 | train/step: 830.0000 | ETA: 3h 47m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:13:06] Step 840/10000 | train/loss: 0.7912 | train/step: 840.0000 | ETA: 3h 50m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2578 | train/lr: 4.20e-06
+[2026-02-27 02:13:21] Step 850/10000 | train/loss: 0.8597 | train/step: 850.0000 | ETA: 3h 52m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:13:37] Step 860/10000 | train/loss: 0.6290 | train/step: 860.0000 | ETA: 3h 54m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:13:53] Step 870/10000 | train/loss: 0.7466 | train/step: 870.0000 | ETA: 3h 52m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:14:07] Step 880/10000 | train/loss: 0.5776 | train/step: 880.0000 | ETA: 3h 55m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2109 | train/lr: 4.40e-06
+[2026-02-27 02:14:21] Step 890/10000 | train/loss: 0.9288 | train/step: 890.0000 | ETA: 3h 53m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:14:37] Step 900/10000 | train/loss: 0.6278 | train/step: 900.0000 | ETA: 3h 57m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:14:52] Step 910/10000 | train/loss: 0.8474 | train/step: 910.0000 | ETA: 3h 55m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:15:05] Step 920/10000 | train/loss: 0.6419 | train/step: 920.0000 | ETA: 3h 48m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.4453 | train/lr: 4.60e-06
+[2026-02-27 02:15:20] Step 930/10000 | train/loss: 1.2888 | train/step: 930.0000 | ETA: 3h 46m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:15:36] Step 940/10000 | train/loss: 1.0088 | train/step: 940.0000 | ETA: 3h 45m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:15:49] Step 950/10000 | train/loss: 0.9219 | train/step: 950.0000 | ETA: 3h 43m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:16:03] Step 960/10000 | train/loss: 0.9092 | train/step: 960.0000 | ETA: 3h 40m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.3047 | train/lr: 4.80e-06
+[2026-02-27 02:16:18] Step 970/10000 | train/loss: 0.9855 | train/step: 970.0000 | ETA: 3h 38m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:16:31] Step 980/10000 | train/loss: 0.9328 | train/step: 980.0000 | ETA: 3h 35m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:16:46] Step 990/10000 | train/loss: 1.2110 | train/step: 990.0000 | ETA: 3h 37m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:17:00] Step 1000/10000 | train/loss: 0.9866 | train/step: 1000.0000 | ETA: 3h 35m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.3125 | train/lr: 5.00e-06
+[2026-02-27 02:17:34] 💾 Saved PEFT checkpoint: results/base_model/E43_70b_sft/checkpoints/step_1000 (LoRA=1120, embed/lm_head=2, projector=20)
+[2026-02-27 02:17:49] Step 1010/10000 | train/loss: 0.4490 | train/step: 1010.0000 | ETA: 4h 26m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:18:03] Step 1020/10000 | train/loss: 1.0242 | train/step: 1020.0000 | ETA: 4h 27m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:18:17] Step 1030/10000 | train/loss: 0.5285 | train/step: 1030.0000 | ETA: 4h 25m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:18:31] Step 1040/10000 | train/loss: 0.2425 | train/step: 1040.0000 | ETA: 4h 21m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2109 | train/lr: 5.20e-06
+[2026-02-27 02:18:47] Step 1050/10000 | train/loss: 0.7776 | train/step: 1050.0000 | ETA: 4h 24m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:19:02] Step 1060/10000 | train/loss: 0.8536 | train/step: 1060.0000 | ETA: 4h 27m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:19:17] Step 1070/10000 | train/loss: 0.6739 | train/step: 1070.0000 | ETA: 4h 26m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:19:32] Step 1080/10000 | train/loss: 0.5945 | train/step: 1080.0000 | ETA: 4h 28m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2578 | train/lr: 5.40e-06
+[2026-02-27 02:19:46] Step 1090/10000 | train/loss: 1.0877 | train/step: 1090.0000 | ETA: 4h 28m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:19:59] Step 1100/10000 | train/loss: 1.1287 | train/step: 1100.0000 | ETA: 4h 25m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:20:14] Step 1110/10000 | train/loss: 0.7719 | train/step: 1110.0000 | ETA: 3h 33m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:20:30] Step 1120/10000 | train/loss: 1.0337 | train/step: 1120.0000 | ETA: 3h 36m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2500 | train/lr: 5.60e-06
+[2026-02-27 02:20:46] Step 1130/10000 | train/loss: 1.0496 | train/step: 1130.0000 | ETA: 3h 40m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:21:00] Step 1140/10000 | train/loss: 0.8838 | train/step: 1140.0000 | ETA: 3h 40m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:21:16] Step 1150/10000 | train/loss: 0.9134 | train/step: 1150.0000 | ETA: 3h 40m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:21:31] Step 1160/10000 | train/loss: 0.7326 | train/step: 1160.0000 | ETA: 3h 39m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2500 | train/lr: 5.80e-06
+[2026-02-27 02:21:44] Step 1170/10000 | train/loss: 0.6511 | train/step: 1170.0000 | ETA: 3h 36m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:21:59] Step 1180/10000 | train/loss: 0.3357 | train/step: 1180.0000 | ETA: 3h 35m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:22:13] Step 1190/10000 | train/loss: 0.5985 | train/step: 1190.0000 | ETA: 3h 35m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:22:29] Step 1200/10000 | train/loss: 0.6580 | train/step: 1200.0000 | ETA: 3h 39m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2969 | train/lr: 6.00e-06
+[2026-02-27 02:22:44] Step 1210/10000 | train/loss: 0.9421 | train/step: 1210.0000 | ETA: 3h 40m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:22:57] Step 1220/10000 | train/loss: 0.7092 | train/step: 1220.0000 | ETA: 3h 36m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:23:12] Step 1230/10000 | train/loss: 0.8764 | train/step: 1230.0000 | ETA: 3h 32m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:23:27] Step 1240/10000 | train/loss: 0.8735 | train/step: 1240.0000 | ETA: 3h 33m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.3047 | train/lr: 6.20e-06
+[2026-02-27 02:23:42] Step 1250/10000 | train/loss: 0.6279 | train/step: 1250.0000 | ETA: 3h 32m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:23:57] Step 1260/10000 | train/loss: 1.1096 | train/step: 1260.0000 | ETA: 3h 31m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:24:10] Step 1270/10000 | train/loss: 0.4784 | train/step: 1270.0000 | ETA: 3h 31m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:24:23] Step 1280/10000 | train/loss: 0.5762 | train/step: 1280.0000 | ETA: 3h 29m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.4609 | train/lr: 6.40e-06
+[2026-02-27 02:24:37] Step 1290/10000 | train/loss: 0.8962 | train/step: 1290.0000 | ETA: 3h 29m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:24:52] Step 1300/10000 | train/loss: 0.7723 | train/step: 1300.0000 | ETA: 3h 27m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:25:06] Step 1310/10000 | train/loss: 0.8771 | train/step: 1310.0000 | ETA: 3h 24m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:25:21] Step 1320/10000 | train/loss: 0.8796 | train/step: 1320.0000 | ETA: 3h 27m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2344 | train/lr: 6.60e-06
+[2026-02-27 02:25:36] Step 1330/10000 | train/loss: 0.9225 | train/step: 1330.0000 | ETA: 3h 28m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:25:50] Step 1340/10000 | train/loss: 0.8015 | train/step: 1340.0000 | ETA: 3h 26m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:26:04] Step 1350/10000 | train/loss: 0.4607 | train/step: 1350.0000 | ETA: 3h 24m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:26:17] Step 1360/10000 | train/loss: 0.8804 | train/step: 1360.0000 | ETA: 3h 22m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.3281 | train/lr: 6.80e-06
+[2026-02-27 02:26:32] Step 1370/10000 | train/loss: 1.0326 | train/step: 1370.0000 | ETA: 3h 25m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:26:48] Step 1380/10000 | train/loss: 0.5558 | train/step: 1380.0000 | ETA: 3h 28m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:27:02] Step 1390/10000 | train/loss: 0.7265 | train/step: 1390.0000 | ETA: 3h 27m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:27:18] Step 1400/10000 | train/loss: 0.9384 | train/step: 1400.0000 | ETA: 3h 28m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2031 | train/lr: 7.00e-06
+[2026-02-27 02:27:33] Step 1410/10000 | train/loss: 0.6781 | train/step: 1410.0000 | ETA: 3h 30m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:27:48] Step 1420/10000 | train/loss: 0.9378 | train/step: 1420.0000 | ETA: 3h 30m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:28:01] Step 1430/10000 | train/loss: 0.7855 | train/step: 1430.0000 | ETA: 3h 27m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:28:16] Step 1440/10000 | train/loss: 0.7937 | train/step: 1440.0000 | ETA: 3h 28m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.3516 | train/lr: 7.20e-06
+[2026-02-27 02:28:32] Step 1450/10000 | train/loss: 0.8526 | train/step: 1450.0000 | ETA: 3h 31m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:28:48] Step 1460/10000 | train/loss: 0.9596 | train/step: 1460.0000 | ETA: 3h 34m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:29:03] Step 1470/10000 | train/loss: 1.0120 | train/step: 1470.0000 | ETA: 3h 34m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:29:18] Step 1480/10000 | train/loss: 0.7603 | train/step: 1480.0000 | ETA: 3h 33m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 4.2188 | train/lr: 7.40e-06
+[2026-02-27 02:29:33] Step 1490/10000 | train/loss: 1.2252 | train/step: 1490.0000 | ETA: 3h 35m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:29:48] Step 1500/10000 | train/loss: 0.7573 | train/step: 1500.0000 | ETA: 3h 33m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:30:23] 💾 Saved PEFT checkpoint: results/base_model/E43_70b_sft/checkpoints/step_1500 (LoRA=1120, embed/lm_head=2, projector=20)
+[2026-02-27 02:30:39] Step 1510/10000 | train/loss: 0.2955 | train/step: 1510.0000 | ETA: 4h 23m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:30:52] Step 1520/10000 | train/loss: 1.1626 | train/step: 1520.0000 | ETA: 4h 20m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.3125 | train/lr: 7.60e-06
+[2026-02-27 02:31:06] Step 1530/10000 | train/loss: 0.9333 | train/step: 1530.0000 | ETA: 4h 21m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:31:20] Step 1540/10000 | train/loss: 0.8627 | train/step: 1540.0000 | ETA: 4h 18m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:31:33] Step 1550/10000 | train/loss: 0.8680 | train/step: 1550.0000 | ETA: 4h 14m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:31:46] Step 1560/10000 | train/loss: 0.5683 | train/step: 1560.0000 | ETA: 4h 10m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2266 | train/lr: 7.80e-06
+[2026-02-27 02:32:00] Step 1570/10000 | train/loss: 0.8174 | train/step: 1570.0000 | ETA: 4h 9m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:32:14] Step 1580/10000 | train/loss: 0.7206 | train/step: 1580.0000 | ETA: 4h 6m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:32:27] Step 1590/10000 | train/loss: 0.5198 | train/step: 1590.0000 | ETA: 4h 3m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:32:43] Step 1600/10000 | train/loss: 0.5872 | train/step: 1600.0000 | ETA: 4h 4m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2031 | train/lr: 8.00e-06
+[2026-02-27 02:32:56] Step 1610/10000 | train/loss: 0.8565 | train/step: 1610.0000 | ETA: 3h 12m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:33:11] Step 1620/10000 | train/loss: 0.9125 | train/step: 1620.0000 | ETA: 3h 13m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:33:25] Step 1630/10000 | train/loss: 0.6690 | train/step: 1630.0000 | ETA: 3h 13m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:33:41] Step 1640/10000 | train/loss: 0.4758 | train/step: 1640.0000 | ETA: 3h 16m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.3281 | train/lr: 8.20e-06
+[2026-02-27 02:33:53] Step 1650/10000 | train/loss: 0.6432 | train/step: 1650.0000 | ETA: 3h 15m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:34:08] Step 1660/10000 | train/loss: 0.5007 | train/step: 1660.0000 | ETA: 3h 18m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:34:23] Step 1670/10000 | train/loss: 0.7395 | train/step: 1670.0000 | ETA: 3h 17m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:34:37] Step 1680/10000 | train/loss: 0.7252 | train/step: 1680.0000 | ETA: 3h 17m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.3984 | train/lr: 8.40e-06
+[2026-02-27 02:34:52] Step 1690/10000 | train/loss: 0.7726 | train/step: 1690.0000 | ETA: 3h 20m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:35:06] Step 1700/10000 | train/loss: 0.6161 | train/step: 1700.0000 | ETA: 3h 17m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:35:19] Step 1710/10000 | train/loss: 0.4286 | train/step: 1710.0000 | ETA: 3h 16m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:35:33] Step 1720/10000 | train/loss: 0.7842 | train/step: 1720.0000 | ETA: 3h 15m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1562 | train/lr: 8.60e-06
+[2026-02-27 02:35:48] Step 1730/10000 | train/loss: 1.0075 | train/step: 1730.0000 | ETA: 3h 16m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:36:02] Step 1740/10000 | train/loss: 0.4768 | train/step: 1740.0000 | ETA: 3h 14m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:36:18] Step 1750/10000 | train/loss: 0.4217 | train/step: 1750.0000 | ETA: 3h 19m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:36:33] Step 1760/10000 | train/loss: 0.4463 | train/step: 1760.0000 | ETA: 3h 18m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1562 | train/lr: 8.80e-06
+[2026-02-27 02:36:48] Step 1770/10000 | train/loss: 1.1110 | train/step: 1770.0000 | ETA: 3h 19m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:37:04] Step 1780/10000 | train/loss: 0.7370 | train/step: 1780.0000 | ETA: 3h 21m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:37:19] Step 1790/10000 | train/loss: 0.5324 | train/step: 1790.0000 | ETA: 3h 21m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:37:34] Step 1800/10000 | train/loss: 0.7024 | train/step: 1800.0000 | ETA: 3h 22m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1641 | train/lr: 9.00e-06
+[2026-02-27 02:37:49] Step 1810/10000 | train/loss: 0.7600 | train/step: 1810.0000 | ETA: 3h 24m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:38:04] Step 1820/10000 | train/loss: 0.5948 | train/step: 1820.0000 | ETA: 3h 26m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:38:19] Step 1830/10000 | train/loss: 1.1163 | train/step: 1830.0000 | ETA: 3h 25m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:38:34] Step 1840/10000 | train/loss: 0.7175 | train/step: 1840.0000 | ETA: 3h 26m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2734 | train/lr: 9.20e-06
+[2026-02-27 02:38:49] Step 1850/10000 | train/loss: 0.6529 | train/step: 1850.0000 | ETA: 3h 24m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:39:03] Step 1860/10000 | train/loss: 0.7919 | train/step: 1860.0000 | ETA: 3h 23m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:39:17] Step 1870/10000 | train/loss: 0.4207 | train/step: 1870.0000 | ETA: 3h 21m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:39:31] Step 1880/10000 | train/loss: 0.6517 | train/step: 1880.0000 | ETA: 3h 19m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1719 | train/lr: 9.40e-06
+[2026-02-27 02:39:46] Step 1890/10000 | train/loss: 0.7749 | train/step: 1890.0000 | ETA: 3h 19m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:40:01] Step 1900/10000 | train/loss: 0.5845 | train/step: 1900.0000 | ETA: 3h 18m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:40:15] Step 1910/10000 | train/loss: 0.8508 | train/step: 1910.0000 | ETA: 3h 17m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:40:30] Step 1920/10000 | train/loss: 0.3920 | train/step: 1920.0000 | ETA: 3h 17m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2500 | train/lr: 9.60e-06
+[2026-02-27 02:40:45] Step 1930/10000 | train/loss: 0.8504 | train/step: 1930.0000 | ETA: 3h 17m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:41:02] Step 1940/10000 | train/loss: 1.1473 | train/step: 1940.0000 | ETA: 3h 19m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:41:17] Step 1950/10000 | train/loss: 0.7529 | train/step: 1950.0000 | ETA: 3h 19m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:41:32] Step 1960/10000 | train/loss: 0.7891 | train/step: 1960.0000 | ETA: 3h 19m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2188 | train/lr: 9.80e-06
+[2026-02-27 02:41:47] Step 1970/10000 | train/loss: 0.8485 | train/step: 1970.0000 | ETA: 3h 20m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:42:02] Step 1980/10000 | train/loss: 0.7602 | train/step: 1980.0000 | ETA: 3h 20m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:42:16] Step 1990/10000 | train/loss: 0.6389 | train/step: 1990.0000 | ETA: 3h 19m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:42:31] Step 2000/10000 | train/loss: 0.6683 | train/step: 2000.0000 | ETA: 3h 19m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1797 | train/lr: 1.00e-05
+[2026-02-27 02:43:04] 💾 Saved PEFT checkpoint: results/base_model/E43_70b_sft/checkpoints/step_2000 (LoRA=1120, embed/lm_head=2, projector=20)
+[2026-02-27 02:43:18] Step 2010/10000 | train/loss: 0.8222 | train/step: 2010.0000 | ETA: 4h 3m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:43:35] Step 2020/10000 | train/loss: 0.9028 | train/step: 2020.0000 | ETA: 4h 5m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:43:50] Step 2030/10000 | train/loss: 0.5995 | train/step: 2030.0000 | ETA: 4h 5m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:44:05] Step 2040/10000 | train/loss: 0.6124 | train/step: 2040.0000 | ETA: 4h 2m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2891 | train/lr: 1.02e-05
+[2026-02-27 02:44:18] Step 2050/10000 | train/loss: 0.6884 | train/step: 2050.0000 | ETA: 3h 59m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:44:32] Step 2060/10000 | train/loss: 1.0945 | train/step: 2060.0000 | ETA: 3h 58m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:44:47] Step 2070/10000 | train/loss: 0.5667 | train/step: 2070.0000 | ETA: 3h 58m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:45:01] Step 2080/10000 | train/loss: 0.3367 | train/step: 2080.0000 | ETA: 3h 57m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2031 | train/lr: 1.04e-05
+[2026-02-27 02:45:17] Step 2090/10000 | train/loss: 0.7788 | train/step: 2090.0000 | ETA: 3h 59m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:45:33] Step 2100/10000 | train/loss: 1.0179 | train/step: 2100.0000 | ETA: 4h 0m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:45:48] Step 2110/10000 | train/loss: 0.7886 | train/step: 2110.0000 | ETA: 3h 16m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:46:02] Step 2120/10000 | train/loss: 0.9421 | train/step: 2120.0000 | ETA: 3h 13m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.3203 | train/lr: 1.06e-05
+[2026-02-27 02:46:17] Step 2130/10000 | train/loss: 0.7681 | train/step: 2130.0000 | ETA: 3h 12m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:46:33] Step 2140/10000 | train/loss: 0.4986 | train/step: 2140.0000 | ETA: 3h 13m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:46:47] Step 2150/10000 | train/loss: 0.6911 | train/step: 2150.0000 | ETA: 3h 14m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:47:02] Step 2160/10000 | train/loss: 0.4892 | train/step: 2160.0000 | ETA: 3h 16m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.3594 | train/lr: 1.08e-05
+[2026-02-27 02:47:17] Step 2170/10000 | train/loss: 0.6959 | train/step: 2170.0000 | ETA: 3h 15m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:47:31] Step 2180/10000 | train/loss: 0.8281 | train/step: 2180.0000 | ETA: 3h 15m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:47:44] Step 2190/10000 | train/loss: 0.7739 | train/step: 2190.0000 | ETA: 3h 11m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:47:59] Step 2200/10000 | train/loss: 0.8022 | train/step: 2200.0000 | ETA: 3h 8m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1016 | train/lr: 1.10e-05
+[2026-02-27 02:48:14] Step 2210/10000 | train/loss: 0.7444 | train/step: 2210.0000 | ETA: 3h 9m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:48:29] Step 2220/10000 | train/loss: 0.7449 | train/step: 2220.0000 | ETA: 3h 9m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:48:43] Step 2230/10000 | train/loss: 0.9036 | train/step: 2230.0000 | ETA: 3h 9m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:48:56] Step 2240/10000 | train/loss: 0.6373 | train/step: 2240.0000 | ETA: 3h 5m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2344 | train/lr: 1.12e-05
+[2026-02-27 02:49:09] Step 2250/10000 | train/loss: 0.7076 | train/step: 2250.0000 | ETA: 3h 3m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:49:23] Step 2260/10000 | train/loss: 0.8450 | train/step: 2260.0000 | ETA: 3h 1m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:49:37] Step 2270/10000 | train/loss: 0.5853 | train/step: 2270.0000 | ETA: 2h 59m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:49:51] Step 2280/10000 | train/loss: 0.9717 | train/step: 2280.0000 | ETA: 2h 59m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.3125 | train/lr: 1.14e-05
+[2026-02-27 02:50:05] Step 2290/10000 | train/loss: 0.8528 | train/step: 2290.0000 | ETA: 3h 1m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:50:22] Step 2300/10000 | train/loss: 0.9837 | train/step: 2300.0000 | ETA: 3h 3m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:50:36] Step 2310/10000 | train/loss: 1.1137 | train/step: 2310.0000 | ETA: 3h 2m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:50:50] Step 2320/10000 | train/loss: 0.8006 | train/step: 2320.0000 | ETA: 3h 0m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2734 | train/lr: 1.16e-05
+[2026-02-27 02:51:04] Step 2330/10000 | train/loss: 0.8179 | train/step: 2330.0000 | ETA: 2h 59m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:51:16] Step 2340/10000 | train/loss: 0.7505 | train/step: 2340.0000 | ETA: 2h 58m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:51:30] Step 2350/10000 | train/loss: 0.6115 | train/step: 2350.0000 | ETA: 2h 59m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:51:44] Step 2360/10000 | train/loss: 0.8254 | train/step: 2360.0000 | ETA: 2h 59m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2188 | train/lr: 1.18e-05
+[2026-02-27 02:51:58] Step 2370/10000 | train/loss: 0.7792 | train/step: 2370.0000 | ETA: 2h 59m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:52:11] Step 2380/10000 | train/loss: 0.9190 | train/step: 2380.0000 | ETA: 2h 57m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:52:28] Step 2390/10000 | train/loss: 0.8120 | train/step: 2390.0000 | ETA: 3h 1m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:52:45] Step 2400/10000 | train/loss: 0.8805 | train/step: 2400.0000 | ETA: 3h 1m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2656 | train/lr: 1.20e-05
+[2026-02-27 02:53:00] Step 2410/10000 | train/loss: 0.6364 | train/step: 2410.0000 | ETA: 3h 2m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:53:16] Step 2420/10000 | train/loss: 1.0723 | train/step: 2420.0000 | ETA: 3h 4m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:53:30] Step 2430/10000 | train/loss: 0.7759 | train/step: 2430.0000 | ETA: 3h 4m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:53:46] Step 2440/10000 | train/loss: 0.5585 | train/step: 2440.0000 | ETA: 3h 8m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2422 | train/lr: 1.22e-05
+[2026-02-27 02:54:01] Step 2450/10000 | train/loss: 0.9041 | train/step: 2450.0000 | ETA: 3h 10m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:54:16] Step 2460/10000 | train/loss: 0.7043 | train/step: 2460.0000 | ETA: 3h 10m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:54:31] Step 2470/10000 | train/loss: 0.7491 | train/step: 2470.0000 | ETA: 3h 12m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:54:46] Step 2480/10000 | train/loss: 0.7317 | train/step: 2480.0000 | ETA: 3h 13m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1719 | train/lr: 1.24e-05
+[2026-02-27 02:55:01] Step 2490/10000 | train/loss: 0.5318 | train/step: 2490.0000 | ETA: 3h 10m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:55:13] Step 2500/10000 | train/loss: 0.8373 | train/step: 2500.0000 | ETA: 3h 5m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:55:56] 💾 Saved PEFT checkpoint: results/base_model/E43_70b_sft/checkpoints/step_2500 (LoRA=1120, embed/lm_head=2, projector=20)
+[2026-02-27 02:56:10] Step 2510/10000 | train/loss: 0.5556 | train/step: 2510.0000 | ETA: 3h 57m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:56:25] Step 2520/10000 | train/loss: 0.8671 | train/step: 2520.0000 | ETA: 3h 55m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2969 | train/lr: 1.26e-05
+[2026-02-27 02:56:39] Step 2530/10000 | train/loss: 0.7115 | train/step: 2530.0000 | ETA: 3h 55m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:56:55] Step 2540/10000 | train/loss: 0.5689 | train/step: 2540.0000 | ETA: 3h 55m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:57:10] Step 2550/10000 | train/loss: 0.5264 | train/step: 2550.0000 | ETA: 3h 53m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:57:23] Step 2560/10000 | train/loss: 0.7732 | train/step: 2560.0000 | ETA: 3h 51m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.3047 | train/lr: 1.28e-05
+[2026-02-27 02:57:37] Step 2570/10000 | train/loss: 0.8041 | train/step: 2570.0000 | ETA: 3h 49m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:57:50] Step 2580/10000 | train/loss: 0.6055 | train/step: 2580.0000 | ETA: 3h 47m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:58:03] Step 2590/10000 | train/loss: 0.3622 | train/step: 2590.0000 | ETA: 3h 44m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:58:17] Step 2600/10000 | train/loss: 0.5368 | train/step: 2600.0000 | ETA: 3h 46m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2891 | train/lr: 1.30e-05
+[2026-02-27 02:58:31] Step 2610/10000 | train/loss: 0.5735 | train/step: 2610.0000 | ETA: 2h 53m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:58:45] Step 2620/10000 | train/loss: 0.5913 | train/step: 2620.0000 | ETA: 2h 52m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:59:00] Step 2630/10000 | train/loss: 0.6069 | train/step: 2630.0000 | ETA: 2h 52m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:59:13] Step 2640/10000 | train/loss: 0.8899 | train/step: 2640.0000 | ETA: 2h 48m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.4062 | train/lr: 1.32e-05
+[2026-02-27 02:59:26] Step 2650/10000 | train/loss: 0.3783 | train/step: 2650.0000 | ETA: 2h 47m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:59:42] Step 2660/10000 | train/loss: 0.6052 | train/step: 2660.0000 | ETA: 2h 50m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 02:59:57] Step 2670/10000 | train/loss: 0.6554 | train/step: 2670.0000 | ETA: 2h 50m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:00:10] Step 2680/10000 | train/loss: 0.5368 | train/step: 2680.0000 | ETA: 2h 51m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2812 | train/lr: 1.34e-05
+[2026-02-27 03:00:24] Step 2690/10000 | train/loss: 0.6515 | train/step: 2690.0000 | ETA: 2h 51m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:00:37] Step 2700/10000 | train/loss: 0.6772 | train/step: 2700.0000 | ETA: 2h 51m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:00:52] Step 2710/10000 | train/loss: 0.7000 | train/step: 2710.0000 | ETA: 2h 50m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:01:06] Step 2720/10000 | train/loss: 0.4915 | train/step: 2720.0000 | ETA: 2h 51m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2812 | train/lr: 1.36e-05
+[2026-02-27 03:01:20] Step 2730/10000 | train/loss: 0.7528 | train/step: 2730.0000 | ETA: 2h 50m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:01:35] Step 2740/10000 | train/loss: 0.6780 | train/step: 2740.0000 | ETA: 2h 52m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:01:51] Step 2750/10000 | train/loss: 0.7190 | train/step: 2750.0000 | ETA: 2h 54m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:02:05] Step 2760/10000 | train/loss: 0.5154 | train/step: 2760.0000 | ETA: 2h 53m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2578 | train/lr: 1.38e-05
+[2026-02-27 03:02:21] Step 2770/10000 | train/loss: 0.6421 | train/step: 2770.0000 | ETA: 2h 53m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:02:35] Step 2780/10000 | train/loss: 0.6452 | train/step: 2780.0000 | ETA: 2h 53m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:02:49] Step 2790/10000 | train/loss: 0.8684 | train/step: 2790.0000 | ETA: 2h 54m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:03:04] Step 2800/10000 | train/loss: 0.7663 | train/step: 2800.0000 | ETA: 2h 56m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2656 | train/lr: 1.40e-05
+[2026-02-27 03:03:17] Step 2810/10000 | train/loss: 0.5992 | train/step: 2810.0000 | ETA: 2h 54m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:03:34] Step 2820/10000 | train/loss: 0.9178 | train/step: 2820.0000 | ETA: 2h 56m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:03:50] Step 2830/10000 | train/loss: 0.4518 | train/step: 2830.0000 | ETA: 2h 58m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:04:03] Step 2840/10000 | train/loss: 0.4526 | train/step: 2840.0000 | ETA: 2h 57m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2266 | train/lr: 1.42e-05
+[2026-02-27 03:04:20] Step 2850/10000 | train/loss: 0.6323 | train/step: 2850.0000 | ETA: 2h 57m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:04:33] Step 2860/10000 | train/loss: 1.0025 | train/step: 2860.0000 | ETA: 2h 55m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:04:49] Step 2870/10000 | train/loss: 0.7564 | train/step: 2870.0000 | ETA: 2h 54m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:05:05] Step 2880/10000 | train/loss: 0.7421 | train/step: 2880.0000 | ETA: 2h 57m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1719 | train/lr: 1.44e-05
+[2026-02-27 03:05:20] Step 2890/10000 | train/loss: 0.3926 | train/step: 2890.0000 | ETA: 2h 58m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:05:35] Step 2900/10000 | train/loss: 0.5316 | train/step: 2900.0000 | ETA: 2h 58m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:05:49] Step 2910/10000 | train/loss: 0.5670 | train/step: 2910.0000 | ETA: 2h 59m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:06:05] Step 2920/10000 | train/loss: 0.9201 | train/step: 2920.0000 | ETA: 2h 57m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2812 | train/lr: 1.46e-05
+[2026-02-27 03:06:19] Step 2930/10000 | train/loss: 0.5158 | train/step: 2930.0000 | ETA: 2h 56m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:06:34] Step 2940/10000 | train/loss: 0.7719 | train/step: 2940.0000 | ETA: 2h 57m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:06:48] Step 2950/10000 | train/loss: 0.6422 | train/step: 2950.0000 | ETA: 2h 54m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:07:02] Step 2960/10000 | train/loss: 0.4868 | train/step: 2960.0000 | ETA: 2h 54m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2656 | train/lr: 1.48e-05
+[2026-02-27 03:07:19] Step 2970/10000 | train/loss: 0.5104 | train/step: 2970.0000 | ETA: 2h 55m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:07:33] Step 2980/10000 | train/loss: 0.7068 | train/step: 2980.0000 | ETA: 2h 53m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:07:49] Step 2990/10000 | train/loss: 0.7670 | train/step: 2990.0000 | ETA: 2h 55m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:08:04] Step 3000/10000 | train/loss: 0.7246 | train/step: 3000.0000 | ETA: 2h 54m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1562 | train/lr: 1.50e-05
+[2026-02-27 03:08:51] 💾 Saved PEFT checkpoint: results/base_model/E43_70b_sft/checkpoints/step_3000 (LoRA=1120, embed/lm_head=2, projector=20)
+[2026-02-27 03:09:08] Step 3010/10000 | train/loss: 0.9049 | train/step: 3010.0000 | ETA: 3h 51m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:09:23] Step 3020/10000 | train/loss: 0.3749 | train/step: 3020.0000 | ETA: 3h 50m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:09:36] Step 3030/10000 | train/loss: 0.3512 | train/step: 3030.0000 | ETA: 3h 48m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:09:51] Step 3040/10000 | train/loss: 0.6849 | train/step: 3040.0000 | ETA: 3h 48m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0781 | train/lr: 1.52e-05
+[2026-02-27 03:10:03] Step 3050/10000 | train/loss: 0.3847 | train/step: 3050.0000 | ETA: 3h 46m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:10:19] Step 3060/10000 | train/loss: 0.7990 | train/step: 3060.0000 | ETA: 3h 48m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:10:33] Step 3070/10000 | train/loss: 0.4282 | train/step: 3070.0000 | ETA: 3h 44m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:10:47] Step 3080/10000 | train/loss: 0.2993 | train/step: 3080.0000 | ETA: 3h 44m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2109 | train/lr: 1.54e-05
+[2026-02-27 03:11:02] Step 3090/10000 | train/loss: 0.7219 | train/step: 3090.0000 | ETA: 3h 41m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:11:17] Step 3100/10000 | train/loss: 0.4988 | train/step: 3100.0000 | ETA: 3h 40m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:11:29] Step 3110/10000 | train/loss: 0.7710 | train/step: 3110.0000 | ETA: 2h 42m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:11:42] Step 3120/10000 | train/loss: 0.6995 | train/step: 3120.0000 | ETA: 2h 40m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2031 | train/lr: 1.56e-05
+[2026-02-27 03:11:57] Step 3130/10000 | train/loss: 0.8257 | train/step: 3130.0000 | ETA: 2h 40m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:12:11] Step 3140/10000 | train/loss: 0.5447 | train/step: 3140.0000 | ETA: 2h 39m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:12:25] Step 3150/10000 | train/loss: 0.7672 | train/step: 3150.0000 | ETA: 2h 41m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:12:40] Step 3160/10000 | train/loss: 0.4223 | train/step: 3160.0000 | ETA: 2h 40m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0156 | train/lr: 1.58e-05
+[2026-02-27 03:12:54] Step 3170/10000 | train/loss: 0.5450 | train/step: 3170.0000 | ETA: 2h 40m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:13:08] Step 3180/10000 | train/loss: 0.7551 | train/step: 3180.0000 | ETA: 2h 39m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:13:23] Step 3190/10000 | train/loss: 0.6387 | train/step: 3190.0000 | ETA: 2h 40m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:13:37] Step 3200/10000 | train/loss: 0.8038 | train/step: 3200.0000 | ETA: 2h 39m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1406 | train/lr: 1.60e-05
+[2026-02-27 03:13:53] Step 3210/10000 | train/loss: 0.4196 | train/step: 3210.0000 | ETA: 2h 42m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:14:07] Step 3220/10000 | train/loss: 0.5236 | train/step: 3220.0000 | ETA: 2h 43m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:14:21] Step 3230/10000 | train/loss: 0.6058 | train/step: 3230.0000 | ETA: 2h 43m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:14:35] Step 3240/10000 | train/loss: 0.5281 | train/step: 3240.0000 | ETA: 2h 42m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1406 | train/lr: 1.62e-05
+[2026-02-27 03:14:51] Step 3250/10000 | train/loss: 0.5530 | train/step: 3250.0000 | ETA: 2h 43m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:15:05] Step 3260/10000 | train/loss: 0.7076 | train/step: 3260.0000 | ETA: 2h 42m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:15:19] Step 3270/10000 | train/loss: 0.8577 | train/step: 3270.0000 | ETA: 2h 43m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:15:33] Step 3280/10000 | train/loss: 0.7190 | train/step: 3280.0000 | ETA: 2h 42m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2500 | train/lr: 1.64e-05
+[2026-02-27 03:15:48] Step 3290/10000 | train/loss: 0.6887 | train/step: 3290.0000 | ETA: 2h 41m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:16:02] Step 3300/10000 | train/loss: 0.3168 | train/step: 3300.0000 | ETA: 2h 40m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:16:16] Step 3310/10000 | train/loss: 0.6912 | train/step: 3310.0000 | ETA: 2h 39m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:16:30] Step 3320/10000 | train/loss: 0.5472 | train/step: 3320.0000 | ETA: 2h 39m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1641 | train/lr: 1.66e-05
+[2026-02-27 03:16:47] Step 3330/10000 | train/loss: 0.5034 | train/step: 3330.0000 | ETA: 2h 41m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:17:02] Step 3340/10000 | train/loss: 0.6003 | train/step: 3340.0000 | ETA: 2h 43m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:17:17] Step 3350/10000 | train/loss: 0.5673 | train/step: 3350.0000 | ETA: 2h 42m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:17:33] Step 3360/10000 | train/loss: 0.6854 | train/step: 3360.0000 | ETA: 2h 43m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.3125 | train/lr: 1.68e-05
+[2026-02-27 03:17:48] Step 3370/10000 | train/loss: 0.4860 | train/step: 3370.0000 | ETA: 2h 44m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:18:01] Step 3380/10000 | train/loss: 0.4540 | train/step: 3380.0000 | ETA: 2h 42m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:18:15] Step 3390/10000 | train/loss: 0.5899 | train/step: 3390.0000 | ETA: 2h 41m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:18:30] Step 3400/10000 | train/loss: 0.6068 | train/step: 3400.0000 | ETA: 2h 43m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.3047 | train/lr: 1.70e-05
+[2026-02-27 03:18:45] Step 3410/10000 | train/loss: 0.7465 | train/step: 3410.0000 | ETA: 2h 43m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:18:59] Step 3420/10000 | train/loss: 0.2929 | train/step: 3420.0000 | ETA: 2h 42m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:19:14] Step 3430/10000 | train/loss: 0.5606 | train/step: 3430.0000 | ETA: 2h 40m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:19:27] Step 3440/10000 | train/loss: 0.4573 | train/step: 3440.0000 | ETA: 2h 38m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2500 | train/lr: 1.72e-05
+[2026-02-27 03:19:40] Step 3450/10000 | train/loss: 0.7004 | train/step: 3450.0000 | ETA: 2h 36m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:19:55] Step 3460/10000 | train/loss: 0.5011 | train/step: 3460.0000 | ETA: 2h 35m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:20:10] Step 3470/10000 | train/loss: 0.4257 | train/step: 3470.0000 | ETA: 2h 33m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:20:24] Step 3480/10000 | train/loss: 0.4797 | train/step: 3480.0000 | ETA: 2h 36m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2969 | train/lr: 1.74e-05
+[2026-02-27 03:20:38] Step 3490/10000 | train/loss: 0.7898 | train/step: 3490.0000 | ETA: 2h 35m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:20:54] Step 3500/10000 | train/loss: 0.6108 | train/step: 3500.0000 | ETA: 2h 35m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:21:35] 💾 Saved PEFT checkpoint: results/base_model/E43_70b_sft/checkpoints/step_3500 (LoRA=1120, embed/lm_head=2, projector=20)
+[2026-02-27 03:21:50] Step 3510/10000 | train/loss: 0.6844 | train/step: 3510.0000 | ETA: 3h 20m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:22:03] Step 3520/10000 | train/loss: 0.7322 | train/step: 3520.0000 | ETA: 3h 19m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1641 | train/lr: 1.76e-05
+[2026-02-27 03:22:19] Step 3530/10000 | train/loss: 0.8038 | train/step: 3530.0000 | ETA: 3h 19m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:22:34] Step 3540/10000 | train/loss: 0.7436 | train/step: 3540.0000 | ETA: 3h 21m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:22:50] Step 3550/10000 | train/loss: 0.9740 | train/step: 3550.0000 | ETA: 3h 24m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:23:06] Step 3560/10000 | train/loss: 0.9645 | train/step: 3560.0000 | ETA: 3h 24m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1094 | train/lr: 1.78e-05
+[2026-02-27 03:23:19] Step 3570/10000 | train/loss: 0.6493 | train/step: 3570.0000 | ETA: 3h 22m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:23:34] Step 3580/10000 | train/loss: 0.5603 | train/step: 3580.0000 | ETA: 3h 22m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:23:47] Step 3590/10000 | train/loss: 0.4021 | train/step: 3590.0000 | ETA: 3h 21m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:24:02] Step 3600/10000 | train/loss: 0.7691 | train/step: 3600.0000 | ETA: 3h 20m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2266 | train/lr: 1.80e-05
+[2026-02-27 03:24:16] Step 3610/10000 | train/loss: 1.0719 | train/step: 3610.0000 | ETA: 2h 34m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:24:32] Step 3620/10000 | train/loss: 0.5359 | train/step: 3620.0000 | ETA: 2h 37m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:24:44] Step 3630/10000 | train/loss: 0.5580 | train/step: 3630.0000 | ETA: 2h 34m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:24:58] Step 3640/10000 | train/loss: 0.6720 | train/step: 3640.0000 | ETA: 2h 33m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2031 | train/lr: 1.82e-05
+[2026-02-27 03:25:13] Step 3650/10000 | train/loss: 0.5481 | train/step: 3650.0000 | ETA: 2h 30m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:25:28] Step 3660/10000 | train/loss: 0.2313 | train/step: 3660.0000 | ETA: 2h 30m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:25:43] Step 3670/10000 | train/loss: 0.6335 | train/step: 3670.0000 | ETA: 2h 31m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:25:57] Step 3680/10000 | train/loss: 0.6700 | train/step: 3680.0000 | ETA: 2h 30m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2188 | train/lr: 1.84e-05
+[2026-02-27 03:26:09] Step 3690/10000 | train/loss: 0.6987 | train/step: 3690.0000 | ETA: 2h 29m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:26:23] Step 3700/10000 | train/loss: 0.3068 | train/step: 3700.0000 | ETA: 2h 28m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:26:38] Step 3710/10000 | train/loss: 0.5061 | train/step: 3710.0000 | ETA: 2h 28m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:26:51] Step 3720/10000 | train/loss: 0.7300 | train/step: 3720.0000 | ETA: 2h 26m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1016 | train/lr: 1.86e-05
+[2026-02-27 03:27:06] Step 3730/10000 | train/loss: 0.9816 | train/step: 3730.0000 | ETA: 2h 27m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:27:20] Step 3740/10000 | train/loss: 0.8032 | train/step: 3740.0000 | ETA: 2h 28m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:27:34] Step 3750/10000 | train/loss: 0.5548 | train/step: 3750.0000 | ETA: 2h 26m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:27:48] Step 3760/10000 | train/loss: 0.5978 | train/step: 3760.0000 | ETA: 2h 26m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1250 | train/lr: 1.88e-05
+[2026-02-27 03:28:02] Step 3770/10000 | train/loss: 0.2407 | train/step: 3770.0000 | ETA: 2h 24m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:28:15] Step 3780/10000 | train/loss: 0.5166 | train/step: 3780.0000 | ETA: 2h 23m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:28:30] Step 3790/10000 | train/loss: 0.5524 | train/step: 3790.0000 | ETA: 2h 25m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:28:43] Step 3800/10000 | train/loss: 0.5769 | train/step: 3800.0000 | ETA: 2h 24m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1484 | train/lr: 1.90e-05
+[2026-02-27 03:28:57] Step 3810/10000 | train/loss: 0.5870 | train/step: 3810.0000 | ETA: 2h 23m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:29:13] Step 3820/10000 | train/loss: 0.6512 | train/step: 3820.0000 | ETA: 2h 26m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:29:27] Step 3830/10000 | train/loss: 0.5454 | train/step: 3830.0000 | ETA: 2h 25m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:29:42] Step 3840/10000 | train/loss: 0.2996 | train/step: 3840.0000 | ETA: 2h 25m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1094 | train/lr: 1.92e-05
+[2026-02-27 03:29:57] Step 3850/10000 | train/loss: 0.4686 | train/step: 3850.0000 | ETA: 2h 27m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:30:10] Step 3860/10000 | train/loss: 0.3811 | train/step: 3860.0000 | ETA: 2h 25m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:30:24] Step 3870/10000 | train/loss: 0.2807 | train/step: 3870.0000 | ETA: 2h 25m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:30:38] Step 3880/10000 | train/loss: 0.7867 | train/step: 3880.0000 | ETA: 2h 25m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1875 | train/lr: 1.94e-05
+[2026-02-27 03:30:52] Step 3890/10000 | train/loss: 0.5744 | train/step: 3890.0000 | ETA: 2h 24m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:31:06] Step 3900/10000 | train/loss: 0.5023 | train/step: 3900.0000 | ETA: 2h 24m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:31:20] Step 3910/10000 | train/loss: 0.7797 | train/step: 3910.0000 | ETA: 2h 24m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:31:35] Step 3920/10000 | train/loss: 0.8018 | train/step: 3920.0000 | ETA: 2h 24m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0703 | train/lr: 1.96e-05
+[2026-02-27 03:31:50] Step 3930/10000 | train/loss: 0.6898 | train/step: 3930.0000 | ETA: 2h 24m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:32:05] Step 3940/10000 | train/loss: 0.5119 | train/step: 3940.0000 | ETA: 2h 24m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:32:23] Step 3950/10000 | train/loss: 0.4780 | train/step: 3950.0000 | ETA: 2h 27m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:32:37] Step 3960/10000 | train/loss: 0.9579 | train/step: 3960.0000 | ETA: 2h 27m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2109 | train/lr: 1.98e-05
+[2026-02-27 03:32:51] Step 3970/10000 | train/loss: 0.4446 | train/step: 3970.0000 | ETA: 2h 28m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:33:07] Step 3980/10000 | train/loss: 0.8738 | train/step: 3980.0000 | ETA: 2h 29m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:33:24] Step 3990/10000 | train/loss: 1.0501 | train/step: 3990.0000 | ETA: 2h 32m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:33:40] Step 4000/10000 | train/loss: 0.5019 | train/step: 4000.0000 | ETA: 2h 33m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1953 | train/lr: 2.00e-05
+[2026-02-27 03:34:28] 💾 Saved PEFT checkpoint: results/base_model/E43_70b_sft/checkpoints/step_4000 (LoRA=1120, embed/lm_head=2, projector=20)
+[2026-02-27 03:34:45] Step 4010/10000 | train/loss: 0.8405 | train/step: 4010.0000 | ETA: 3h 24m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:35:00] Step 4020/10000 | train/loss: 0.5081 | train/step: 4020.0000 | ETA: 3h 23m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:35:13] Step 4030/10000 | train/loss: 0.7824 | train/step: 4030.0000 | ETA: 3h 22m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:35:28] Step 4040/10000 | train/loss: 0.4905 | train/step: 4040.0000 | ETA: 3h 21m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1484 | train/lr: 2.00e-05
+[2026-02-27 03:35:41] Step 4050/10000 | train/loss: 0.9114 | train/step: 4050.0000 | ETA: 3h 16m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:35:56] Step 4060/10000 | train/loss: 0.6577 | train/step: 4060.0000 | ETA: 3h 17m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:36:10] Step 4070/10000 | train/loss: 0.5917 | train/step: 4070.0000 | ETA: 3h 16m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:36:26] Step 4080/10000 | train/loss: 0.6361 | train/step: 4080.0000 | ETA: 3h 16m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1250 | train/lr: 2.00e-05
+[2026-02-27 03:36:42] Step 4090/10000 | train/loss: 0.9596 | train/step: 4090.0000 | ETA: 3h 14m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:36:57] Step 4100/10000 | train/loss: 0.5881 | train/step: 4100.0000 | ETA: 3h 13m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:37:11] Step 4110/10000 | train/loss: 0.8973 | train/step: 4110.0000 | ETA: 2h 23m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:37:25] Step 4120/10000 | train/loss: 0.6886 | train/step: 4120.0000 | ETA: 2h 22m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0781 | train/lr: 2.00e-05
+[2026-02-27 03:37:39] Step 4130/10000 | train/loss: 0.7714 | train/step: 4130.0000 | ETA: 2h 22m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:37:54] Step 4140/10000 | train/loss: 0.3960 | train/step: 4140.0000 | ETA: 2h 23m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:38:08] Step 4150/10000 | train/loss: 0.8495 | train/step: 4150.0000 | ETA: 2h 22m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:38:22] Step 4160/10000 | train/loss: 0.8355 | train/step: 4160.0000 | ETA: 2h 22m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2109 | train/lr: 2.00e-05
+[2026-02-27 03:38:37] Step 4170/10000 | train/loss: 0.7052 | train/step: 4170.0000 | ETA: 2h 22m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:38:53] Step 4180/10000 | train/loss: 0.6451 | train/step: 4180.0000 | ETA: 2h 22m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:39:07] Step 4190/10000 | train/loss: 0.6501 | train/step: 4190.0000 | ETA: 2h 20m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:39:22] Step 4200/10000 | train/loss: 0.6918 | train/step: 4200.0000 | ETA: 2h 20m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0312 | train/lr: 2.00e-05
+[2026-02-27 03:39:38] Step 4210/10000 | train/loss: 0.7572 | train/step: 4210.0000 | ETA: 2h 21m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:39:54] Step 4220/10000 | train/loss: 0.2358 | train/step: 4220.0000 | ETA: 2h 23m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:40:09] Step 4230/10000 | train/loss: 0.4932 | train/step: 4230.0000 | ETA: 2h 23m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:40:25] Step 4240/10000 | train/loss: 0.5031 | train/step: 4240.0000 | ETA: 2h 24m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0469 | train/lr: 2.00e-05
+[2026-02-27 03:40:39] Step 4250/10000 | train/loss: 0.4981 | train/step: 4250.0000 | ETA: 2h 25m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:40:55] Step 4260/10000 | train/loss: 0.7066 | train/step: 4260.0000 | ETA: 2h 26m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:41:11] Step 4270/10000 | train/loss: 0.4608 | train/step: 4270.0000 | ETA: 2h 27m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:41:28] Step 4280/10000 | train/loss: 0.7072 | train/step: 4280.0000 | ETA: 2h 27m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1250 | train/lr: 2.00e-05
+[2026-02-27 03:41:43] Step 4290/10000 | train/loss: 0.7926 | train/step: 4290.0000 | ETA: 2h 28m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:41:56] Step 4300/10000 | train/loss: 0.1564 | train/step: 4300.0000 | ETA: 2h 25m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:42:13] Step 4310/10000 | train/loss: 0.4774 | train/step: 4310.0000 | ETA: 2h 26m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:42:27] Step 4320/10000 | train/loss: 0.6417 | train/step: 4320.0000 | ETA: 2h 24m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2188 | train/lr: 2.00e-05
+[2026-02-27 03:42:41] Step 4330/10000 | train/loss: 0.4534 | train/step: 4330.0000 | ETA: 2h 24m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:42:56] Step 4340/10000 | train/loss: 0.6925 | train/step: 4340.0000 | ETA: 2h 22m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:43:11] Step 4350/10000 | train/loss: 0.5586 | train/step: 4350.0000 | ETA: 2h 22m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:43:26] Step 4360/10000 | train/loss: 0.4779 | train/step: 4360.0000 | ETA: 2h 21m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1016 | train/lr: 2.00e-05
+[2026-02-27 03:43:41] Step 4370/10000 | train/loss: 0.5739 | train/step: 4370.0000 | ETA: 2h 20m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:43:55] Step 4380/10000 | train/loss: 0.6215 | train/step: 4380.0000 | ETA: 2h 18m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:44:10] Step 4390/10000 | train/loss: 0.7136 | train/step: 4390.0000 | ETA: 2h 17m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:44:25] Step 4400/10000 | train/loss: 0.7069 | train/step: 4400.0000 | ETA: 2h 18m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0625 | train/lr: 2.00e-05
+[2026-02-27 03:44:39] Step 4410/10000 | train/loss: 0.6732 | train/step: 4410.0000 | ETA: 2h 16m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:44:53] Step 4420/10000 | train/loss: 0.5693 | train/step: 4420.0000 | ETA: 2h 15m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:45:07] Step 4430/10000 | train/loss: 0.4348 | train/step: 4430.0000 | ETA: 2h 14m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:45:22] Step 4440/10000 | train/loss: 0.7996 | train/step: 4440.0000 | ETA: 2h 15m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2891 | train/lr: 2.00e-05
+[2026-02-27 03:45:38] Step 4450/10000 | train/loss: 0.9668 | train/step: 4450.0000 | ETA: 2h 16m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:45:51] Step 4460/10000 | train/loss: 0.6428 | train/step: 4460.0000 | ETA: 2h 13m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:46:06] Step 4470/10000 | train/loss: 0.7615 | train/step: 4470.0000 | ETA: 2h 12m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:46:21] Step 4480/10000 | train/loss: 0.7046 | train/step: 4480.0000 | ETA: 2h 13m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2031 | train/lr: 2.00e-05
+[2026-02-27 03:46:35] Step 4490/10000 | train/loss: 0.2367 | train/step: 4490.0000 | ETA: 2h 12m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:46:49] Step 4500/10000 | train/loss: 0.5596 | train/step: 4500.0000 | ETA: 2h 11m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:47:25] 💾 Saved PEFT checkpoint: results/base_model/E43_70b_sft/checkpoints/step_4500 (LoRA=1120, embed/lm_head=2, projector=20)
+[2026-02-27 03:47:40] Step 4510/10000 | train/loss: 0.5847 | train/step: 4510.0000 | ETA: 2h 45m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:47:55] Step 4520/10000 | train/loss: 0.5415 | train/step: 4520.0000 | ETA: 2h 46m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1172 | train/lr: 2.00e-05
+[2026-02-27 03:48:10] Step 4530/10000 | train/loss: 0.4986 | train/step: 4530.0000 | ETA: 2h 46m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:48:24] Step 4540/10000 | train/loss: 0.3765 | train/step: 4540.0000 | ETA: 2h 44m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:48:38] Step 4550/10000 | train/loss: 0.6257 | train/step: 4550.0000 | ETA: 2h 43m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:48:53] Step 4560/10000 | train/loss: 0.3590 | train/step: 4560.0000 | ETA: 2h 44m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1719 | train/lr: 2.00e-05
+[2026-02-27 03:49:07] Step 4570/10000 | train/loss: 0.6694 | train/step: 4570.0000 | ETA: 2h 44m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:49:21] Step 4580/10000 | train/loss: 0.3950 | train/step: 4580.0000 | ETA: 2h 42m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:49:37] Step 4590/10000 | train/loss: 0.4473 | train/step: 4590.0000 | ETA: 2h 44m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:49:54] Step 4600/10000 | train/loss: 0.8079 | train/step: 4600.0000 | ETA: 2h 46m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1797 | train/lr: 2.00e-05
+[2026-02-27 03:50:08] Step 4610/10000 | train/loss: 0.4361 | train/step: 4610.0000 | ETA: 2h 12m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:50:23] Step 4620/10000 | train/loss: 0.8489 | train/step: 4620.0000 | ETA: 2h 12m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:50:36] Step 4630/10000 | train/loss: 0.6287 | train/step: 4630.0000 | ETA: 2h 11m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:50:50] Step 4640/10000 | train/loss: 0.5414 | train/step: 4640.0000 | ETA: 2h 11m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1094 | train/lr: 2.00e-05
+[2026-02-27 03:51:04] Step 4650/10000 | train/loss: 0.6661 | train/step: 4650.0000 | ETA: 2h 10m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:51:20] Step 4660/10000 | train/loss: 0.7282 | train/step: 4660.0000 | ETA: 2h 11m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:51:35] Step 4670/10000 | train/loss: 0.5009 | train/step: 4670.0000 | ETA: 2h 11m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:51:47] Step 4680/10000 | train/loss: 0.7140 | train/step: 4680.0000 | ETA: 2h 9m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0703 | train/lr: 2.00e-05
+[2026-02-27 03:52:03] Step 4690/10000 | train/loss: 0.4896 | train/step: 4690.0000 | ETA: 2h 9m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:52:18] Step 4700/10000 | train/loss: 0.4109 | train/step: 4700.0000 | ETA: 2h 7m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:52:31] Step 4710/10000 | train/loss: 0.4068 | train/step: 4710.0000 | ETA: 2h 6m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:52:45] Step 4720/10000 | train/loss: 0.4624 | train/step: 4720.0000 | ETA: 2h 5m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0312 | train/lr: 2.00e-05
+[2026-02-27 03:53:01] Step 4730/10000 | train/loss: 0.7175 | train/step: 4730.0000 | ETA: 2h 6m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:53:14] Step 4740/10000 | train/loss: 0.7693 | train/step: 4740.0000 | ETA: 2h 5m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:53:28] Step 4750/10000 | train/loss: 0.7593 | train/step: 4750.0000 | ETA: 2h 6m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:53:41] Step 4760/10000 | train/loss: 0.5483 | train/step: 4760.0000 | ETA: 2h 3m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0234 | train/lr: 2.00e-05
+[2026-02-27 03:53:55] Step 4770/10000 | train/loss: 0.7972 | train/step: 4770.0000 | ETA: 2h 2m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:54:10] Step 4780/10000 | train/loss: 0.6717 | train/step: 4780.0000 | ETA: 2h 4m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:54:28] Step 4790/10000 | train/loss: 0.7012 | train/step: 4790.0000 | ETA: 2h 5m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:54:43] Step 4800/10000 | train/loss: 0.7225 | train/step: 4800.0000 | ETA: 2h 5m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1562 | train/lr: 2.00e-05
+[2026-02-27 03:54:58] Step 4810/10000 | train/loss: 0.6794 | train/step: 4810.0000 | ETA: 2h 6m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:55:12] Step 4820/10000 | train/loss: 0.6250 | train/step: 4820.0000 | ETA: 2h 6m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:55:26] Step 4830/10000 | train/loss: 0.5609 | train/step: 4830.0000 | ETA: 2h 5m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:55:40] Step 4840/10000 | train/loss: 0.4605 | train/step: 4840.0000 | ETA: 2h 6m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0312 | train/lr: 2.00e-05
+[2026-02-27 03:55:54] Step 4850/10000 | train/loss: 0.4694 | train/step: 4850.0000 | ETA: 2h 5m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:56:11] Step 4860/10000 | train/loss: 0.4412 | train/step: 4860.0000 | ETA: 2h 8m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:56:29] Step 4870/10000 | train/loss: 0.8371 | train/step: 4870.0000 | ETA: 2h 11m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:56:43] Step 4880/10000 | train/loss: 0.7027 | train/step: 4880.0000 | ETA: 2h 10m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0938 | train/lr: 2.00e-05
+[2026-02-27 03:56:57] Step 4890/10000 | train/loss: 0.4712 | train/step: 4890.0000 | ETA: 2h 7m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:57:11] Step 4900/10000 | train/loss: 0.4710 | train/step: 4900.0000 | ETA: 2h 5m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:57:26] Step 4910/10000 | train/loss: 0.7402 | train/step: 4910.0000 | ETA: 2h 5m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:57:41] Step 4920/10000 | train/loss: 0.7403 | train/step: 4920.0000 | ETA: 2h 6m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1562 | train/lr: 2.00e-05
+[2026-02-27 03:57:54] Step 4930/10000 | train/loss: 0.4131 | train/step: 4930.0000 | ETA: 2h 4m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:58:07] Step 4940/10000 | train/loss: 0.4316 | train/step: 4940.0000 | ETA: 2h 3m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:58:21] Step 4950/10000 | train/loss: 0.4101 | train/step: 4950.0000 | ETA: 2h 3m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:58:35] Step 4960/10000 | train/loss: 0.4759 | train/step: 4960.0000 | ETA: 2h 0m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0859 | train/lr: 2.00e-05
+[2026-02-27 03:58:51] Step 4970/10000 | train/loss: 0.8635 | train/step: 4970.0000 | ETA: 1h 59m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:59:06] Step 4980/10000 | train/loss: 0.6475 | train/step: 4980.0000 | ETA: 1h 59m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:59:22] Step 4990/10000 | train/loss: 0.5709 | train/step: 4990.0000 | ETA: 2h 0m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 03:59:37] Step 5000/10000 | train/loss: 0.5158 | train/step: 5000.0000 | ETA: 2h 1m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0703 | train/lr: 2.00e-05
+[2026-02-27 04:00:19] 💾 Saved PEFT checkpoint: results/base_model/E43_70b_sft/checkpoints/step_5000 (LoRA=1120, embed/lm_head=2, projector=20)
+[2026-02-27 04:00:34] Step 5010/10000 | train/loss: 0.4071 | train/step: 5010.0000 | ETA: 2h 36m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:00:47] Step 5020/10000 | train/loss: 0.8092 | train/step: 5020.0000 | ETA: 2h 34m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:01:01] Step 5030/10000 | train/loss: 0.6423 | train/step: 5030.0000 | ETA: 2h 35m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:01:15] Step 5040/10000 | train/loss: 0.5165 | train/step: 5040.0000 | ETA: 2h 35m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1172 | train/lr: 2.00e-05
+[2026-02-27 04:01:31] Step 5050/10000 | train/loss: 0.7468 | train/step: 5050.0000 | ETA: 2h 36m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:01:45] Step 5060/10000 | train/loss: 0.7327 | train/step: 5060.0000 | ETA: 2h 37m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:02:00] Step 5070/10000 | train/loss: 0.7164 | train/step: 5070.0000 | ETA: 2h 34m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:02:15] Step 5080/10000 | train/loss: 0.3584 | train/step: 5080.0000 | ETA: 2h 34m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0234 | train/lr: 2.00e-05
+[2026-02-27 04:02:30] Step 5090/10000 | train/loss: 0.3614 | train/step: 5090.0000 | ETA: 2h 34m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:02:44] Step 5100/10000 | train/loss: 0.5673 | train/step: 5100.0000 | ETA: 2h 32m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:02:59] Step 5110/10000 | train/loss: 0.6131 | train/step: 5110.0000 | ETA: 1h 58m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:03:14] Step 5120/10000 | train/loss: 0.6031 | train/step: 5120.0000 | ETA: 1h 59m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2188 | train/lr: 2.00e-05
+[2026-02-27 04:03:29] Step 5130/10000 | train/loss: 0.7241 | train/step: 5130.0000 | ETA: 1h 59m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:03:45] Step 5140/10000 | train/loss: 0.5724 | train/step: 5140.0000 | ETA: 2h 1m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:04:00] Step 5150/10000 | train/loss: 0.3318 | train/step: 5150.0000 | ETA: 2h 0m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:04:15] Step 5160/10000 | train/loss: 0.5487 | train/step: 5160.0000 | ETA: 2h 0m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2031 | train/lr: 2.00e-05
+[2026-02-27 04:04:31] Step 5170/10000 | train/loss: 0.1668 | train/step: 5170.0000 | ETA: 2h 2m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:04:48] Step 5180/10000 | train/loss: 0.4047 | train/step: 5180.0000 | ETA: 2h 2m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:05:01] Step 5190/10000 | train/loss: 0.6957 | train/step: 5190.0000 | ETA: 2h 0m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:05:15] Step 5200/10000 | train/loss: 0.5596 | train/step: 5200.0000 | ETA: 2h 1m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.3359 | train/lr: 2.00e-05
+[2026-02-27 04:05:31] Step 5210/10000 | train/loss: 0.7012 | train/step: 5210.0000 | ETA: 2h 0m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:05:45] Step 5220/10000 | train/loss: 0.3483 | train/step: 5220.0000 | ETA: 1h 59m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:06:00] Step 5230/10000 | train/loss: 0.6467 | train/step: 5230.0000 | ETA: 1h 59m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:06:15] Step 5240/10000 | train/loss: 0.6199 | train/step: 5240.0000 | ETA: 1h 59m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1406 | train/lr: 2.00e-05
+[2026-02-27 04:06:32] Step 5250/10000 | train/loss: 1.1143 | train/step: 5250.0000 | ETA: 2h 0m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:06:47] Step 5260/10000 | train/loss: 0.6785 | train/step: 5260.0000 | ETA: 2h 0m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:07:01] Step 5270/10000 | train/loss: 0.4939 | train/step: 5270.0000 | ETA: 1h 57m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:07:15] Step 5280/10000 | train/loss: 0.4908 | train/step: 5280.0000 | ETA: 1h 55m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0234 | train/lr: 2.00e-05
+[2026-02-27 04:07:28] Step 5290/10000 | train/loss: 0.4768 | train/step: 5290.0000 | ETA: 1h 55m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:07:40] Step 5300/10000 | train/loss: 0.2414 | train/step: 5300.0000 | ETA: 1h 53m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:07:54] Step 5310/10000 | train/loss: 0.5459 | train/step: 5310.0000 | ETA: 1h 52m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:08:09] Step 5320/10000 | train/loss: 0.5701 | train/step: 5320.0000 | ETA: 1h 52m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1797 | train/lr: 2.00e-05
+[2026-02-27 04:08:25] Step 5330/10000 | train/loss: 0.4895 | train/step: 5330.0000 | ETA: 1h 53m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:08:39] Step 5340/10000 | train/loss: 0.5449 | train/step: 5340.0000 | ETA: 1h 51m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:08:53] Step 5350/10000 | train/loss: 0.7027 | train/step: 5350.0000 | ETA: 1h 49m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:09:08] Step 5360/10000 | train/loss: 0.2906 | train/step: 5360.0000 | ETA: 1h 48m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1172 | train/lr: 2.00e-05
+[2026-02-27 04:09:24] Step 5370/10000 | train/loss: 0.5105 | train/step: 5370.0000 | ETA: 1h 50m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:09:39] Step 5380/10000 | train/loss: 0.6402 | train/step: 5380.0000 | ETA: 1h 50m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:09:52] Step 5390/10000 | train/loss: 0.5615 | train/step: 5390.0000 | ETA: 1h 51m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:10:06] Step 5400/10000 | train/loss: 0.5278 | train/step: 5400.0000 | ETA: 1h 51m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0234 | train/lr: 2.00e-05
+[2026-02-27 04:10:21] Step 5410/10000 | train/loss: 0.2076 | train/step: 5410.0000 | ETA: 1h 52m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:10:36] Step 5420/10000 | train/loss: 0.8238 | train/step: 5420.0000 | ETA: 1h 51m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:10:52] Step 5430/10000 | train/loss: 0.6064 | train/step: 5430.0000 | ETA: 1h 52m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:11:09] Step 5440/10000 | train/loss: 0.7383 | train/step: 5440.0000 | ETA: 1h 54m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0156 | train/lr: 2.00e-05
+[2026-02-27 04:11:26] Step 5450/10000 | train/loss: 0.5548 | train/step: 5450.0000 | ETA: 1h 55m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:11:39] Step 5460/10000 | train/loss: 0.8587 | train/step: 5460.0000 | ETA: 1h 54m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:11:54] Step 5470/10000 | train/loss: 0.6319 | train/step: 5470.0000 | ETA: 1h 53m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:12:09] Step 5480/10000 | train/loss: 0.1163 | train/step: 5480.0000 | ETA: 1h 52m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0547 | train/lr: 2.00e-05
+[2026-02-27 04:12:24] Step 5490/10000 | train/loss: 0.4573 | train/step: 5490.0000 | ETA: 1h 54m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:12:39] Step 5500/10000 | train/loss: 0.5913 | train/step: 5500.0000 | ETA: 1h 54m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:13:27] 💾 Saved PEFT checkpoint: results/base_model/E43_70b_sft/checkpoints/step_5500 (LoRA=1120, embed/lm_head=2, projector=20)
+[2026-02-27 04:13:40] Step 5510/10000 | train/loss: 0.6034 | train/step: 5510.0000 | ETA: 2h 28m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:13:53] Step 5520/10000 | train/loss: 0.6502 | train/step: 5520.0000 | ETA: 2h 27m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0312 | train/lr: 2.00e-05
+[2026-02-27 04:14:08] Step 5530/10000 | train/loss: 0.4363 | train/step: 5530.0000 | ETA: 2h 25m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:14:24] Step 5540/10000 | train/loss: 0.4804 | train/step: 5540.0000 | ETA: 2h 24m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:14:37] Step 5550/10000 | train/loss: 0.4533 | train/step: 5550.0000 | ETA: 2h 21m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:14:50] Step 5560/10000 | train/loss: 0.1903 | train/step: 5560.0000 | ETA: 2h 20m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0859 | train/lr: 2.00e-05
+[2026-02-27 04:15:04] Step 5570/10000 | train/loss: 0.6312 | train/step: 5570.0000 | ETA: 2h 19m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:15:22] Step 5580/10000 | train/loss: 0.8707 | train/step: 5580.0000 | ETA: 2h 22m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:15:36] Step 5590/10000 | train/loss: 0.2000 | train/step: 5590.0000 | ETA: 2h 21m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:15:50] Step 5600/10000 | train/loss: 0.7889 | train/step: 5600.0000 | ETA: 2h 20m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1484 | train/lr: 2.00e-05
+[2026-02-27 04:16:05] Step 5610/10000 | train/loss: 0.5257 | train/step: 5610.0000 | ETA: 1h 46m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:16:21] Step 5620/10000 | train/loss: 0.5893 | train/step: 5620.0000 | ETA: 1h 47m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:16:35] Step 5630/10000 | train/loss: 0.6346 | train/step: 5630.0000 | ETA: 1h 47m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:16:50] Step 5640/10000 | train/loss: 0.6846 | train/step: 5640.0000 | ETA: 1h 46m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1406 | train/lr: 2.00e-05
+[2026-02-27 04:17:05] Step 5650/10000 | train/loss: 0.5404 | train/step: 5650.0000 | ETA: 1h 47m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:17:21] Step 5660/10000 | train/loss: 0.6264 | train/step: 5660.0000 | ETA: 1h 49m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:17:36] Step 5670/10000 | train/loss: 0.5471 | train/step: 5670.0000 | ETA: 1h 50m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:17:52] Step 5680/10000 | train/loss: 0.8737 | train/step: 5680.0000 | ETA: 1h 48m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1016 | train/lr: 2.00e-05
+[2026-02-27 04:18:08] Step 5690/10000 | train/loss: 0.4967 | train/step: 5690.0000 | ETA: 1h 48m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:18:22] Step 5700/10000 | train/loss: 0.5218 | train/step: 5700.0000 | ETA: 1h 49m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:18:39] Step 5710/10000 | train/loss: 0.7199 | train/step: 5710.0000 | ETA: 1h 50m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:18:55] Step 5720/10000 | train/loss: 0.6507 | train/step: 5720.0000 | ETA: 1h 49m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0938 | train/lr: 2.00e-05
+[2026-02-27 04:19:09] Step 5730/10000 | train/loss: 0.4510 | train/step: 5730.0000 | ETA: 1h 49m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:19:23] Step 5740/10000 | train/loss: 0.5339 | train/step: 5740.0000 | ETA: 1h 48m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:19:35] Step 5750/10000 | train/loss: 0.6323 | train/step: 5750.0000 | ETA: 1h 46m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:19:50] Step 5760/10000 | train/loss: 0.6023 | train/step: 5760.0000 | ETA: 1h 44m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0547 | train/lr: 2.00e-05
+[2026-02-27 04:20:04] Step 5770/10000 | train/loss: 0.6451 | train/step: 5770.0000 | ETA: 1h 44m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:20:19] Step 5780/10000 | train/loss: 0.7462 | train/step: 5780.0000 | ETA: 1h 42m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:20:34] Step 5790/10000 | train/loss: 0.5626 | train/step: 5790.0000 | ETA: 1h 42m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:20:48] Step 5800/10000 | train/loss: 0.7682 | train/step: 5800.0000 | ETA: 1h 41m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1328 | train/lr: 2.00e-05
+[2026-02-27 04:21:01] Step 5810/10000 | train/loss: 0.6089 | train/step: 5810.0000 | ETA: 1h 38m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:21:15] Step 5820/10000 | train/loss: 0.5624 | train/step: 5820.0000 | ETA: 1h 37m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:21:28] Step 5830/10000 | train/loss: 0.6091 | train/step: 5830.0000 | ETA: 1h 36m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:21:43] Step 5840/10000 | train/loss: 0.6975 | train/step: 5840.0000 | ETA: 1h 37m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0938 | train/lr: 2.00e-05
+[2026-02-27 04:21:58] Step 5850/10000 | train/loss: 0.6811 | train/step: 5850.0000 | ETA: 1h 38m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:22:13] Step 5860/10000 | train/loss: 0.5816 | train/step: 5860.0000 | ETA: 1h 38m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:22:30] Step 5870/10000 | train/loss: 0.4113 | train/step: 5870.0000 | ETA: 1h 40m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:22:44] Step 5880/10000 | train/loss: 1.0075 | train/step: 5880.0000 | ETA: 1h 40m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1562 | train/lr: 2.00e-05
+[2026-02-27 04:23:00] Step 5890/10000 | train/loss: 0.7801 | train/step: 5890.0000 | ETA: 1h 40m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:23:17] Step 5900/10000 | train/loss: 0.5215 | train/step: 5900.0000 | ETA: 1h 41m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:23:29] Step 5910/10000 | train/loss: 0.4729 | train/step: 5910.0000 | ETA: 1h 40m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:23:43] Step 5920/10000 | train/loss: 0.6249 | train/step: 5920.0000 | ETA: 1h 40m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0625 | train/lr: 2.00e-05
+[2026-02-27 04:23:57] Step 5930/10000 | train/loss: 0.5952 | train/step: 5930.0000 | ETA: 1h 41m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:24:11] Step 5940/10000 | train/loss: 0.5878 | train/step: 5940.0000 | ETA: 1h 40m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:24:28] Step 5950/10000 | train/loss: 0.5702 | train/step: 5950.0000 | ETA: 1h 41m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:24:41] Step 5960/10000 | train/loss: 0.4142 | train/step: 5960.0000 | ETA: 1h 39m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0391 | train/lr: 2.00e-05
+[2026-02-27 04:24:54] Step 5970/10000 | train/loss: 0.5593 | train/step: 5970.0000 | ETA: 1h 37m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:25:10] Step 5980/10000 | train/loss: 0.4803 | train/step: 5980.0000 | ETA: 1h 37m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:25:25] Step 5990/10000 | train/loss: 0.4176 | train/step: 5990.0000 | ETA: 1h 36m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:25:40] Step 6000/10000 | train/loss: 0.4936 | train/step: 6000.0000 | ETA: 1h 35m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 0.9805 | train/lr: 2.00e-05
+[2026-02-27 04:26:29] 💾 Saved PEFT checkpoint: results/base_model/E43_70b_sft/checkpoints/step_6000 (LoRA=1120, embed/lm_head=2, projector=20)
+[2026-02-27 04:26:44] Step 6010/10000 | train/loss: 0.6153 | train/step: 6010.0000 | ETA: 2h 9m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:26:58] Step 6020/10000 | train/loss: 0.4160 | train/step: 6020.0000 | ETA: 2h 8m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:27:12] Step 6030/10000 | train/loss: 0.6806 | train/step: 6030.0000 | ETA: 2h 8m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:27:28] Step 6040/10000 | train/loss: 0.3082 | train/step: 6040.0000 | ETA: 2h 9m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.2422 | train/lr: 2.00e-05
+[2026-02-27 04:27:42] Step 6050/10000 | train/loss: 0.5033 | train/step: 6050.0000 | ETA: 2h 8m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:27:56] Step 6060/10000 | train/loss: 0.5045 | train/step: 6060.0000 | ETA: 2h 7m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:28:09] Step 6070/10000 | train/loss: 0.7933 | train/step: 6070.0000 | ETA: 2h 7m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:28:23] Step 6080/10000 | train/loss: 0.8017 | train/step: 6080.0000 | ETA: 2h 6m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0234 | train/lr: 2.00e-05
+[2026-02-27 04:28:38] Step 6090/10000 | train/loss: 0.6652 | train/step: 6090.0000 | ETA: 2h 5m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:28:52] Step 6100/10000 | train/loss: 0.3693 | train/step: 6100.0000 | ETA: 2h 5m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:29:07] Step 6110/10000 | train/loss: 0.4740 | train/step: 6110.0000 | ETA: 1h 32m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:29:20] Step 6120/10000 | train/loss: 0.3082 | train/step: 6120.0000 | ETA: 1h 32m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0859 | train/lr: 2.00e-05
+[2026-02-27 04:29:34] Step 6130/10000 | train/loss: 0.6968 | train/step: 6130.0000 | ETA: 1h 31m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:29:50] Step 6140/10000 | train/loss: 0.3631 | train/step: 6140.0000 | ETA: 1h 31m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:30:06] Step 6150/10000 | train/loss: 0.5523 | train/step: 6150.0000 | ETA: 1h 32m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:30:19] Step 6160/10000 | train/loss: 0.4854 | train/step: 6160.0000 | ETA: 1h 31m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0469 | train/lr: 2.00e-05
+[2026-02-27 04:30:33] Step 6170/10000 | train/loss: 0.5008 | train/step: 6170.0000 | ETA: 1h 32m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:30:46] Step 6180/10000 | train/loss: 0.6890 | train/step: 6180.0000 | ETA: 1h 31m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:31:03] Step 6190/10000 | train/loss: 0.4710 | train/step: 6190.0000 | ETA: 1h 32m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:31:18] Step 6200/10000 | train/loss: 0.6575 | train/step: 6200.0000 | ETA: 1h 32m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1641 | train/lr: 2.00e-05
+[2026-02-27 04:31:34] Step 6210/10000 | train/loss: 0.6108 | train/step: 6210.0000 | ETA: 1h 32m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:31:47] Step 6220/10000 | train/loss: 0.6925 | train/step: 6220.0000 | ETA: 1h 32m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:32:02] Step 6230/10000 | train/loss: 0.4909 | train/step: 6230.0000 | ETA: 1h 32m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:32:15] Step 6240/10000 | train/loss: 0.6009 | train/step: 6240.0000 | ETA: 1h 30m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 0.9688 | train/lr: 2.00e-05
+[2026-02-27 04:32:31] Step 6250/10000 | train/loss: 0.5848 | train/step: 6250.0000 | ETA: 1h 30m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:32:45] Step 6260/10000 | train/loss: 0.5943 | train/step: 6260.0000 | ETA: 1h 30m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:32:58] Step 6270/10000 | train/loss: 0.6087 | train/step: 6270.0000 | ETA: 1h 29m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:33:13] Step 6280/10000 | train/loss: 0.6064 | train/step: 6280.0000 | ETA: 1h 30m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0391 | train/lr: 2.00e-05
+[2026-02-27 04:33:28] Step 6290/10000 | train/loss: 0.5379 | train/step: 6290.0000 | ETA: 1h 30m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:33:42] Step 6300/10000 | train/loss: 0.2277 | train/step: 6300.0000 | ETA: 1h 28m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:33:56] Step 6310/10000 | train/loss: 0.2901 | train/step: 6310.0000 | ETA: 1h 27m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:34:13] Step 6320/10000 | train/loss: 0.8201 | train/step: 6320.0000 | ETA: 1h 29m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0469 | train/lr: 2.00e-05
+[2026-02-27 04:34:30] Step 6330/10000 | train/loss: 0.3870 | train/step: 6330.0000 | ETA: 1h 30m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:34:44] Step 6340/10000 | train/loss: 0.5784 | train/step: 6340.0000 | ETA: 1h 31m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:34:58] Step 6350/10000 | train/loss: 0.7011 | train/step: 6350.0000 | ETA: 1h 29m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:35:12] Step 6360/10000 | train/loss: 0.4639 | train/step: 6360.0000 | ETA: 1h 29m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1172 | train/lr: 2.00e-05
+[2026-02-27 04:35:25] Step 6370/10000 | train/loss: 0.6676 | train/step: 6370.0000 | ETA: 1h 29m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:35:41] Step 6380/10000 | train/loss: 0.6138 | train/step: 6380.0000 | ETA: 1h 29m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:35:54] Step 6390/10000 | train/loss: 0.6414 | train/step: 6390.0000 | ETA: 1h 27m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:36:11] Step 6400/10000 | train/loss: 0.4765 | train/step: 6400.0000 | ETA: 1h 28m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1250 | train/lr: 2.00e-05
+[2026-02-27 04:36:28] Step 6410/10000 | train/loss: 0.4691 | train/step: 6410.0000 | ETA: 1h 30m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:36:44] Step 6420/10000 | train/loss: 0.5355 | train/step: 6420.0000 | ETA: 1h 29m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:36:58] Step 6430/10000 | train/loss: 0.6757 | train/step: 6430.0000 | ETA: 1h 28m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:37:14] Step 6440/10000 | train/loss: 0.7683 | train/step: 6440.0000 | ETA: 1h 28m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1328 | train/lr: 1.99e-05
+[2026-02-27 04:37:29] Step 6450/10000 | train/loss: 0.8660 | train/step: 6450.0000 | ETA: 1h 28m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:37:44] Step 6460/10000 | train/loss: 0.4892 | train/step: 6460.0000 | ETA: 1h 29m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:37:57] Step 6470/10000 | train/loss: 0.5045 | train/step: 6470.0000 | ETA: 1h 29m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:38:12] Step 6480/10000 | train/loss: 0.7087 | train/step: 6480.0000 | ETA: 1h 28m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0391 | train/lr: 1.99e-05
+[2026-02-27 04:38:25] Step 6490/10000 | train/loss: 0.5341 | train/step: 6490.0000 | ETA: 1h 28m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:38:40] Step 6500/10000 | train/loss: 0.4910 | train/step: 6500.0000 | ETA: 1h 27m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:39:50] 💾 Saved PEFT checkpoint: results/base_model/E43_70b_sft/checkpoints/step_6500 (LoRA=1120, embed/lm_head=2, projector=20)
+[2026-02-27 04:40:06] Step 6510/10000 | train/loss: 0.8324 | train/step: 6510.0000 | ETA: 2h 6m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:40:22] Step 6520/10000 | train/loss: 0.3654 | train/step: 6520.0000 | ETA: 2h 6m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 0.9453 | train/lr: 1.99e-05
+[2026-02-27 04:40:36] Step 6530/10000 | train/loss: 0.6745 | train/step: 6530.0000 | ETA: 2h 6m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:40:50] Step 6540/10000 | train/loss: 0.5685 | train/step: 6540.0000 | ETA: 2h 4m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:41:04] Step 6550/10000 | train/loss: 0.3317 | train/step: 6550.0000 | ETA: 2h 3m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:41:18] Step 6560/10000 | train/loss: 0.6247 | train/step: 6560.0000 | ETA: 2h 3m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0234 | train/lr: 1.99e-05
+[2026-02-27 04:41:34] Step 6570/10000 | train/loss: 0.6358 | train/step: 6570.0000 | ETA: 2h 4m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:41:49] Step 6580/10000 | train/loss: 0.6233 | train/step: 6580.0000 | ETA: 2h 3m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:42:04] Step 6590/10000 | train/loss: 0.6372 | train/step: 6590.0000 | ETA: 2h 4m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:42:18] Step 6600/10000 | train/loss: 0.6586 | train/step: 6600.0000 | ETA: 2h 3m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0078 | train/lr: 1.99e-05
+[2026-02-27 04:42:33] Step 6610/10000 | train/loss: 0.6965 | train/step: 6610.0000 | ETA: 1h 23m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:42:48] Step 6620/10000 | train/loss: 0.5607 | train/step: 6620.0000 | ETA: 1h 22m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:43:03] Step 6630/10000 | train/loss: 0.7082 | train/step: 6630.0000 | ETA: 1h 22m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:43:18] Step 6640/10000 | train/loss: 0.4222 | train/step: 6640.0000 | ETA: 1h 22m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0469 | train/lr: 1.99e-05
+[2026-02-27 04:43:32] Step 6650/10000 | train/loss: 0.5606 | train/step: 6650.0000 | ETA: 1h 23m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:43:47] Step 6660/10000 | train/loss: 0.7461 | train/step: 6660.0000 | ETA: 1h 22m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:44:03] Step 6670/10000 | train/loss: 0.5977 | train/step: 6670.0000 | ETA: 1h 22m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:44:17] Step 6680/10000 | train/loss: 0.4479 | train/step: 6680.0000 | ETA: 1h 21m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 0.9688 | train/lr: 1.99e-05
+[2026-02-27 04:44:30] Step 6690/10000 | train/loss: 0.4764 | train/step: 6690.0000 | ETA: 1h 20m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:44:43] Step 6700/10000 | train/loss: 0.5853 | train/step: 6700.0000 | ETA: 1h 19m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:44:55] Step 6710/10000 | train/loss: 0.2186 | train/step: 6710.0000 | ETA: 1h 17m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:45:09] Step 6720/10000 | train/loss: 0.5235 | train/step: 6720.0000 | ETA: 1h 16m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 0.9766 | train/lr: 1.99e-05
+[2026-02-27 04:45:23] Step 6730/10000 | train/loss: 0.4425 | train/step: 6730.0000 | ETA: 1h 16m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:45:38] Step 6740/10000 | train/loss: 0.4224 | train/step: 6740.0000 | ETA: 1h 15m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:45:53] Step 6750/10000 | train/loss: 0.5903 | train/step: 6750.0000 | ETA: 1h 15m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:46:08] Step 6760/10000 | train/loss: 0.6880 | train/step: 6760.0000 | ETA: 1h 16m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0078 | train/lr: 1.99e-05
+[2026-02-27 04:46:21] Step 6770/10000 | train/loss: 0.6644 | train/step: 6770.0000 | ETA: 1h 14m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:46:33] Step 6780/10000 | train/loss: 0.4874 | train/step: 6780.0000 | ETA: 1h 13m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:46:47] Step 6790/10000 | train/loss: 0.3194 | train/step: 6790.0000 | ETA: 1h 12m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:47:02] Step 6800/10000 | train/loss: 0.7008 | train/step: 6800.0000 | ETA: 1h 13m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0625 | train/lr: 1.99e-05
+[2026-02-27 04:47:17] Step 6810/10000 | train/loss: 0.5931 | train/step: 6810.0000 | ETA: 1h 15m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:47:31] Step 6820/10000 | train/loss: 0.5720 | train/step: 6820.0000 | ETA: 1h 15m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:47:46] Step 6830/10000 | train/loss: 0.7451 | train/step: 6830.0000 | ETA: 1h 15m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:48:01] Step 6840/10000 | train/loss: 0.3512 | train/step: 6840.0000 | ETA: 1h 15m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0312 | train/lr: 1.99e-05
+[2026-02-27 04:48:16] Step 6850/10000 | train/loss: 0.7994 | train/step: 6850.0000 | ETA: 1h 15m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:48:29] Step 6860/10000 | train/loss: 0.6269 | train/step: 6860.0000 | ETA: 1h 13m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:48:41] Step 6870/10000 | train/loss: 0.3882 | train/step: 6870.0000 | ETA: 1h 13m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:48:58] Step 6880/10000 | train/loss: 0.4681 | train/step: 6880.0000 | ETA: 1h 15m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0625 | train/lr: 1.99e-05
+[2026-02-27 04:49:11] Step 6890/10000 | train/loss: 0.2911 | train/step: 6890.0000 | ETA: 1h 14m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:49:26] Step 6900/10000 | train/loss: 0.6197 | train/step: 6900.0000 | ETA: 1h 14m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:49:41] Step 6910/10000 | train/loss: 0.5352 | train/step: 6910.0000 | ETA: 1h 14m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:49:55] Step 6920/10000 | train/loss: 0.2917 | train/step: 6920.0000 | ETA: 1h 14m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0859 | train/lr: 1.99e-05
+[2026-02-27 04:50:08] Step 6930/10000 | train/loss: 0.7263 | train/step: 6930.0000 | ETA: 1h 12m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:50:22] Step 6940/10000 | train/loss: 0.3840 | train/step: 6940.0000 | ETA: 1h 12m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:50:36] Step 6950/10000 | train/loss: 0.3353 | train/step: 6950.0000 | ETA: 1h 10m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:50:52] Step 6960/10000 | train/loss: 0.5867 | train/step: 6960.0000 | ETA: 1h 12m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0547 | train/lr: 1.99e-05
+[2026-02-27 04:51:04] Step 6970/10000 | train/loss: 0.5449 | train/step: 6970.0000 | ETA: 1h 12m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:51:18] Step 6980/10000 | train/loss: 0.8452 | train/step: 6980.0000 | ETA: 1h 10m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:51:34] Step 6990/10000 | train/loss: 0.5281 | train/step: 6990.0000 | ETA: 1h 11m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:51:48] Step 7000/10000 | train/loss: 0.2741 | train/step: 7000.0000 | ETA: 1h 10m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 0.9922 | train/lr: 1.99e-05
+[2026-02-27 04:52:27] 💾 Saved PEFT checkpoint: results/base_model/E43_70b_sft/checkpoints/step_7000 (LoRA=1120, embed/lm_head=2, projector=20)
+[2026-02-27 04:52:42] Step 7010/10000 | train/loss: 0.5139 | train/step: 7010.0000 | ETA: 1h 30m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:52:56] Step 7020/10000 | train/loss: 0.5919 | train/step: 7020.0000 | ETA: 1h 30m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:53:10] Step 7030/10000 | train/loss: 0.5258 | train/step: 7030.0000 | ETA: 1h 30m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:53:26] Step 7040/10000 | train/loss: 0.4642 | train/step: 7040.0000 | ETA: 1h 30m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0859 | train/lr: 1.99e-05
+[2026-02-27 04:53:41] Step 7050/10000 | train/loss: 0.6078 | train/step: 7050.0000 | ETA: 1h 31m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:53:55] Step 7060/10000 | train/loss: 0.7454 | train/step: 7060.0000 | ETA: 1h 29m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:54:09] Step 7070/10000 | train/loss: 0.4797 | train/step: 7070.0000 | ETA: 1h 30m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:54:23] Step 7080/10000 | train/loss: 0.4378 | train/step: 7080.0000 | ETA: 1h 29m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0156 | train/lr: 1.99e-05
+[2026-02-27 04:54:39] Step 7090/10000 | train/loss: 0.5760 | train/step: 7090.0000 | ETA: 1h 30m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:54:54] Step 7100/10000 | train/loss: 0.6348 | train/step: 7100.0000 | ETA: 1h 30m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:55:11] Step 7110/10000 | train/loss: 0.5219 | train/step: 7110.0000 | ETA: 1h 11m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:55:25] Step 7120/10000 | train/loss: 0.2543 | train/step: 7120.0000 | ETA: 1h 11m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 0.9883 | train/lr: 1.99e-05
+[2026-02-27 04:55:40] Step 7130/10000 | train/loss: 0.3107 | train/step: 7130.0000 | ETA: 1h 11m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:55:54] Step 7140/10000 | train/loss: 0.4002 | train/step: 7140.0000 | ETA: 1h 10m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:56:09] Step 7150/10000 | train/loss: 0.7099 | train/step: 7150.0000 | ETA: 1h 10m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:56:24] Step 7160/10000 | train/loss: 0.1569 | train/step: 7160.0000 | ETA: 1h 10m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 0.9648 | train/lr: 1.99e-05
+[2026-02-27 04:56:39] Step 7170/10000 | train/loss: 0.5613 | train/step: 7170.0000 | ETA: 1h 10m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:56:54] Step 7180/10000 | train/loss: 0.7972 | train/step: 7180.0000 | ETA: 1h 11m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:57:08] Step 7190/10000 | train/loss: 0.5619 | train/step: 7190.0000 | ETA: 1h 9m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:57:23] Step 7200/10000 | train/loss: 0.3848 | train/step: 7200.0000 | ETA: 1h 9m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0156 | train/lr: 1.99e-05
+[2026-02-27 04:57:37] Step 7210/10000 | train/loss: 0.4781 | train/step: 7210.0000 | ETA: 1h 7m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:57:52] Step 7220/10000 | train/loss: 0.4044 | train/step: 7220.0000 | ETA: 1h 8m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:58:07] Step 7230/10000 | train/loss: 0.7398 | train/step: 7230.0000 | ETA: 1h 7m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:58:21] Step 7240/10000 | train/loss: 0.5759 | train/step: 7240.0000 | ETA: 1h 7m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0938 | train/lr: 1.99e-05
+[2026-02-27 04:58:36] Step 7250/10000 | train/loss: 0.7210 | train/step: 7250.0000 | ETA: 1h 7m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:58:50] Step 7260/10000 | train/loss: 0.4312 | train/step: 7260.0000 | ETA: 1h 6m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:59:06] Step 7270/10000 | train/loss: 0.4130 | train/step: 7270.0000 | ETA: 1h 7m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:59:21] Step 7280/10000 | train/loss: 0.8976 | train/step: 7280.0000 | ETA: 1h 6m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0859 | train/lr: 1.99e-05
+[2026-02-27 04:59:34] Step 7290/10000 | train/loss: 0.7515 | train/step: 7290.0000 | ETA: 1h 6m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 04:59:47] Step 7300/10000 | train/loss: 0.5905 | train/step: 7300.0000 | ETA: 1h 4m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:00:01] Step 7310/10000 | train/loss: 0.4508 | train/step: 7310.0000 | ETA: 1h 4m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:00:16] Step 7320/10000 | train/loss: 0.6169 | train/step: 7320.0000 | ETA: 1h 3m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1875 | train/lr: 1.99e-05
+[2026-02-27 05:00:29] Step 7330/10000 | train/loss: 0.3088 | train/step: 7330.0000 | ETA: 1h 3m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:00:43] Step 7340/10000 | train/loss: 0.4801 | train/step: 7340.0000 | ETA: 1h 2m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:00:57] Step 7350/10000 | train/loss: 0.7337 | train/step: 7350.0000 | ETA: 1h 2m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:01:11] Step 7360/10000 | train/loss: 0.8255 | train/step: 7360.0000 | ETA: 1h 2m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1016 | train/lr: 1.99e-05
+[2026-02-27 05:01:27] Step 7370/10000 | train/loss: 0.4274 | train/step: 7370.0000 | ETA: 1h 1m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:01:40] Step 7380/10000 | train/loss: 0.8270 | train/step: 7380.0000 | ETA: 1h 0m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:01:54] Step 7390/10000 | train/loss: 0.3743 | train/step: 7390.0000 | ETA: 1h 0m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:02:10] Step 7400/10000 | train/loss: 0.6083 | train/step: 7400.0000 | ETA: 1h 2m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 0.9961 | train/lr: 1.99e-05
+[2026-02-27 05:02:24] Step 7410/10000 | train/loss: 0.5727 | train/step: 7410.0000 | ETA: 1h 1m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:02:37] Step 7420/10000 | train/loss: 0.7053 | train/step: 7420.0000 | ETA: 1h 1m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:02:51] Step 7430/10000 | train/loss: 0.2076 | train/step: 7430.0000 | ETA: 1h 0m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:03:05] Step 7440/10000 | train/loss: 0.7474 | train/step: 7440.0000 | ETA: 1h 0m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0859 | train/lr: 1.99e-05
+[2026-02-27 05:03:21] Step 7450/10000 | train/loss: 0.3249 | train/step: 7450.0000 | ETA: 1h 1m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:03:37] Step 7460/10000 | train/loss: 0.7404 | train/step: 7460.0000 | ETA: 1h 1m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:03:52] Step 7470/10000 | train/loss: 0.6492 | train/step: 7470.0000 | ETA: 1h 1m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:04:06] Step 7480/10000 | train/loss: 0.5909 | train/step: 7480.0000 | ETA: 1h 1m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1094 | train/lr: 1.99e-05
+[2026-02-27 05:04:19] Step 7490/10000 | train/loss: 0.6177 | train/step: 7490.0000 | ETA: 1h 0m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:04:34] Step 7500/10000 | train/loss: 0.3756 | train/step: 7500.0000 | ETA: 1h 0m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:05:16] 💾 Saved PEFT checkpoint: results/base_model/E43_70b_sft/checkpoints/step_7500 (LoRA=1120, embed/lm_head=2, projector=20)
+[2026-02-27 05:05:30] Step 7510/10000 | train/loss: 0.3656 | train/step: 7510.0000 | ETA: 1h 17m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:05:43] Step 7520/10000 | train/loss: 0.2821 | train/step: 7520.0000 | ETA: 1h 16m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0234 | train/lr: 1.99e-05
+[2026-02-27 05:05:59] Step 7530/10000 | train/loss: 0.9646 | train/step: 7530.0000 | ETA: 1h 17m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:06:14] Step 7540/10000 | train/loss: 0.6095 | train/step: 7540.0000 | ETA: 1h 17m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:06:28] Step 7550/10000 | train/loss: 0.4180 | train/step: 7550.0000 | ETA: 1h 16m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:06:43] Step 7560/10000 | train/loss: 0.8463 | train/step: 7560.0000 | ETA: 1h 15m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0391 | train/lr: 1.99e-05
+[2026-02-27 05:06:57] Step 7570/10000 | train/loss: 0.5053 | train/step: 7570.0000 | ETA: 1h 15m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:07:14] Step 7580/10000 | train/loss: 0.5540 | train/step: 7580.0000 | ETA: 1h 15m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:07:28] Step 7590/10000 | train/loss: 0.4785 | train/step: 7590.0000 | ETA: 1h 15m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:07:42] Step 7600/10000 | train/loss: 0.3975 | train/step: 7600.0000 | ETA: 1h 14m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0156 | train/lr: 1.99e-05
+[2026-02-27 05:07:55] Step 7610/10000 | train/loss: 0.5583 | train/step: 7610.0000 | ETA: 57m 57s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:08:10] Step 7620/10000 | train/loss: 0.5039 | train/step: 7620.0000 | ETA: 58m 18s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:08:22] Step 7630/10000 | train/loss: 0.5841 | train/step: 7630.0000 | ETA: 56m 44s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:08:37] Step 7640/10000 | train/loss: 0.5350 | train/step: 7640.0000 | ETA: 56m 28s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0312 | train/lr: 1.99e-05
+[2026-02-27 05:08:51] Step 7650/10000 | train/loss: 0.5844 | train/step: 7650.0000 | ETA: 56m 7s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:09:06] Step 7660/10000 | train/loss: 0.5279 | train/step: 7660.0000 | ETA: 55m 39s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:09:19] Step 7670/10000 | train/loss: 0.4167 | train/step: 7670.0000 | ETA: 55m 8s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:09:34] Step 7680/10000 | train/loss: 0.8026 | train/step: 7680.0000 | ETA: 54m 9s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1094 | train/lr: 1.99e-05
+[2026-02-27 05:09:47] Step 7690/10000 | train/loss: 0.3760 | train/step: 7690.0000 | ETA: 53m 33s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:10:04] Step 7700/10000 | train/loss: 0.6133 | train/step: 7700.0000 | ETA: 54m 36s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:10:18] Step 7710/10000 | train/loss: 0.5741 | train/step: 7710.0000 | ETA: 54m 17s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:10:32] Step 7720/10000 | train/loss: 0.6116 | train/step: 7720.0000 | ETA: 54m 5s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0703 | train/lr: 1.99e-05
+[2026-02-27 05:10:46] Step 7730/10000 | train/loss: 0.5689 | train/step: 7730.0000 | ETA: 54m 23s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:11:00] Step 7740/10000 | train/loss: 0.3847 | train/step: 7740.0000 | ETA: 53m 50s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:11:16] Step 7750/10000 | train/loss: 0.5636 | train/step: 7750.0000 | ETA: 54m 14s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:11:31] Step 7760/10000 | train/loss: 0.7459 | train/step: 7760.0000 | ETA: 54m 16s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0703 | train/lr: 1.99e-05
+[2026-02-27 05:11:44] Step 7770/10000 | train/loss: 0.4874 | train/step: 7770.0000 | ETA: 53m 33s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:11:59] Step 7780/10000 | train/loss: 0.5771 | train/step: 7780.0000 | ETA: 53m 42s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:12:16] Step 7790/10000 | train/loss: 0.3242 | train/step: 7790.0000 | ETA: 54m 39s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:12:31] Step 7800/10000 | train/loss: 0.7904 | train/step: 7800.0000 | ETA: 53m 54s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0469 | train/lr: 1.99e-05
+[2026-02-27 05:12:48] Step 7810/10000 | train/loss: 0.7242 | train/step: 7810.0000 | ETA: 54m 41s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:13:05] Step 7820/10000 | train/loss: 0.4200 | train/step: 7820.0000 | ETA: 55m 16s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:13:18] Step 7830/10000 | train/loss: 0.6080 | train/step: 7830.0000 | ETA: 54m 50s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:13:33] Step 7840/10000 | train/loss: 0.4935 | train/step: 7840.0000 | ETA: 55m 3s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1016 | train/lr: 1.99e-05
+[2026-02-27 05:13:48] Step 7850/10000 | train/loss: 0.5616 | train/step: 7850.0000 | ETA: 54m 34s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:14:04] Step 7860/10000 | train/loss: 0.6270 | train/step: 7860.0000 | ETA: 54m 31s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:14:20] Step 7870/10000 | train/loss: 0.4965 | train/step: 7870.0000 | ETA: 55m 38s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:14:35] Step 7880/10000 | train/loss: 0.2786 | train/step: 7880.0000 | ETA: 54m 56s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0391 | train/lr: 1.99e-05
+[2026-02-27 05:14:50] Step 7890/10000 | train/loss: 0.6464 | train/step: 7890.0000 | ETA: 54m 9s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:15:04] Step 7900/10000 | train/loss: 0.3973 | train/step: 7900.0000 | ETA: 53m 35s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:15:19] Step 7910/10000 | train/loss: 0.4398 | train/step: 7910.0000 | ETA: 52m 50s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:15:34] Step 7920/10000 | train/loss: 0.3966 | train/step: 7920.0000 | ETA: 51m 57s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 0.9805 | train/lr: 1.99e-05
+[2026-02-27 05:15:52] Step 7930/10000 | train/loss: 0.4079 | train/step: 7930.0000 | ETA: 53m 8s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:16:09] Step 7940/10000 | train/loss: 0.5377 | train/step: 7940.0000 | ETA: 53m 21s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:16:21] Step 7950/10000 | train/loss: 0.3307 | train/step: 7950.0000 | ETA: 52m 26s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:16:36] Step 7960/10000 | train/loss: 0.3348 | train/step: 7960.0000 | ETA: 51m 46s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 0.9844 | train/lr: 1.99e-05
+[2026-02-27 05:16:52] Step 7970/10000 | train/loss: 0.5677 | train/step: 7970.0000 | ETA: 51m 17s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:17:07] Step 7980/10000 | train/loss: 0.5654 | train/step: 7980.0000 | ETA: 51m 10s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:17:20] Step 7990/10000 | train/loss: 0.3208 | train/step: 7990.0000 | ETA: 50m 18s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:17:35] Step 8000/10000 | train/loss: 0.4306 | train/step: 8000.0000 | ETA: 50m 20s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0781 | train/lr: 1.99e-05
+[2026-02-27 05:18:12] 💾 Saved PEFT checkpoint: results/base_model/E43_70b_sft/checkpoints/step_8000 (LoRA=1120, embed/lm_head=2, projector=20)
+[2026-02-27 05:18:27] Step 8010/10000 | train/loss: 0.5563 | train/step: 8010.0000 | ETA: 1h 2m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:18:41] Step 8020/10000 | train/loss: 0.6226 | train/step: 8020.0000 | ETA: 1h 1m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:18:55] Step 8030/10000 | train/loss: 0.6978 | train/step: 8030.0000 | ETA: 1h 0m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:19:11] Step 8040/10000 | train/loss: 0.3452 | train/step: 8040.0000 | ETA: 59m 30s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0469 | train/lr: 1.99e-05
+[2026-02-27 05:19:26] Step 8050/10000 | train/loss: 0.4699 | train/step: 8050.0000 | ETA: 59m 54s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:19:39] Step 8060/10000 | train/loss: 0.3598 | train/step: 8060.0000 | ETA: 59m 6s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:19:52] Step 8070/10000 | train/loss: 0.4782 | train/step: 8070.0000 | ETA: 57m 58s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:20:07] Step 8080/10000 | train/loss: 0.3944 | train/step: 8080.0000 | ETA: 57m 41s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0312 | train/lr: 1.99e-05
+[2026-02-27 05:20:22] Step 8090/10000 | train/loss: 0.8086 | train/step: 8090.0000 | ETA: 57m 56s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:20:38] Step 8100/10000 | train/loss: 0.5198 | train/step: 8100.0000 | ETA: 57m 50s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:20:51] Step 8110/10000 | train/loss: 0.5097 | train/step: 8110.0000 | ETA: 45m 38s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:21:05] Step 8120/10000 | train/loss: 0.3578 | train/step: 8120.0000 | ETA: 45m 15s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 0.9883 | train/lr: 1.99e-05
+[2026-02-27 05:21:22] Step 8130/10000 | train/loss: 0.2854 | train/step: 8130.0000 | ETA: 45m 54s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:21:37] Step 8140/10000 | train/loss: 0.4465 | train/step: 8140.0000 | ETA: 45m 29s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:21:50] Step 8150/10000 | train/loss: 0.2994 | train/step: 8150.0000 | ETA: 44m 27s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:22:04] Step 8160/10000 | train/loss: 0.3940 | train/step: 8160.0000 | ETA: 44m 28s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0625 | train/lr: 1.99e-05
+[2026-02-27 05:22:19] Step 8170/10000 | train/loss: 0.3350 | train/step: 8170.0000 | ETA: 44m 40s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:22:33] Step 8180/10000 | train/loss: 0.4540 | train/step: 8180.0000 | ETA: 44m 14s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:22:45] Step 8190/10000 | train/loss: 0.3612 | train/step: 8190.0000 | ETA: 43m 15s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:23:00] Step 8200/10000 | train/loss: 0.7863 | train/step: 8200.0000 | ETA: 42m 38s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0625 | train/lr: 1.99e-05
+[2026-02-27 05:23:15] Step 8210/10000 | train/loss: 0.3796 | train/step: 8210.0000 | ETA: 42m 47s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:23:30] Step 8220/10000 | train/loss: 0.4105 | train/step: 8220.0000 | ETA: 42m 47s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:23:43] Step 8230/10000 | train/loss: 0.3398 | train/step: 8230.0000 | ETA: 41m 37s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:23:59] Step 8240/10000 | train/loss: 0.4435 | train/step: 8240.0000 | ETA: 41m 23s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0312 | train/lr: 1.98e-05
+[2026-02-27 05:24:13] Step 8250/10000 | train/loss: 0.5232 | train/step: 8250.0000 | ETA: 41m 40s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:24:28] Step 8260/10000 | train/loss: 0.9080 | train/step: 8260.0000 | ETA: 41m 50s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:24:43] Step 8270/10000 | train/loss: 0.5160 | train/step: 8270.0000 | ETA: 41m 44s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:24:56] Step 8280/10000 | train/loss: 0.2749 | train/step: 8280.0000 | ETA: 41m 7s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 0.9297 | train/lr: 1.98e-05
+[2026-02-27 05:25:13] Step 8290/10000 | train/loss: 0.5573 | train/step: 8290.0000 | ETA: 42m 3s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:25:26] Step 8300/10000 | train/loss: 0.5790 | train/step: 8300.0000 | ETA: 41m 19s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:25:39] Step 8310/10000 | train/loss: 0.5347 | train/step: 8310.0000 | ETA: 40m 40s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:25:55] Step 8320/10000 | train/loss: 0.5473 | train/step: 8320.0000 | ETA: 40m 46s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0234 | train/lr: 1.98e-05
+[2026-02-27 05:26:11] Step 8330/10000 | train/loss: 0.5252 | train/step: 8330.0000 | ETA: 41m 2s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:26:25] Step 8340/10000 | train/loss: 0.4787 | train/step: 8340.0000 | ETA: 40m 29s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:26:40] Step 8350/10000 | train/loss: 0.3869 | train/step: 8350.0000 | ETA: 40m 32s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:26:56] Step 8360/10000 | train/loss: 0.3593 | train/step: 8360.0000 | ETA: 40m 19s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 0.9062 | train/lr: 1.98e-05
+[2026-02-27 05:27:10] Step 8370/10000 | train/loss: 0.7246 | train/step: 8370.0000 | ETA: 39m 51s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:27:24] Step 8380/10000 | train/loss: 0.5009 | train/step: 8380.0000 | ETA: 39m 51s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:27:38] Step 8390/10000 | train/loss: 0.4791 | train/step: 8390.0000 | ETA: 38m 59s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:27:51] Step 8400/10000 | train/loss: 0.6013 | train/step: 8400.0000 | ETA: 38m 40s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 0.9023 | train/lr: 1.98e-05
+[2026-02-27 05:28:05] Step 8410/10000 | train/loss: 0.4355 | train/step: 8410.0000 | ETA: 38m 40s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:28:20] Step 8420/10000 | train/loss: 0.4354 | train/step: 8420.0000 | ETA: 38m 10s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:28:36] Step 8430/10000 | train/loss: 0.6303 | train/step: 8430.0000 | ETA: 37m 53s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:28:51] Step 8440/10000 | train/loss: 0.2903 | train/step: 8440.0000 | ETA: 38m 2s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0078 | train/lr: 1.98e-05
+[2026-02-27 05:29:08] Step 8450/10000 | train/loss: 0.4988 | train/step: 8450.0000 | ETA: 38m 11s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:29:24] Step 8460/10000 | train/loss: 0.4762 | train/step: 8460.0000 | ETA: 38m 7s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:29:38] Step 8470/10000 | train/loss: 0.4327 | train/step: 8470.0000 | ETA: 37m 49s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:29:54] Step 8480/10000 | train/loss: 0.4698 | train/step: 8480.0000 | ETA: 38m 3s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 0.9219 | train/lr: 1.98e-05
+[2026-02-27 05:30:07] Step 8490/10000 | train/loss: 0.1919 | train/step: 8490.0000 | ETA: 37m 35s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:30:20] Step 8500/10000 | train/loss: 0.4419 | train/step: 8500.0000 | ETA: 37m 22s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:30:57] 💾 Saved PEFT checkpoint: results/base_model/E43_70b_sft/checkpoints/step_8500 (LoRA=1120, embed/lm_head=2, projector=20)
+[2026-02-27 05:31:12] Step 8510/10000 | train/loss: 0.3635 | train/step: 8510.0000 | ETA: 46m 28s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:31:27] Step 8520/10000 | train/loss: 0.4630 | train/step: 8520.0000 | ETA: 46m 5s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 0.9922 | train/lr: 1.98e-05
+[2026-02-27 05:31:42] Step 8530/10000 | train/loss: 0.5145 | train/step: 8530.0000 | ETA: 45m 33s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:31:57] Step 8540/10000 | train/loss: 0.5057 | train/step: 8540.0000 | ETA: 45m 13s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:32:12] Step 8550/10000 | train/loss: 0.5601 | train/step: 8550.0000 | ETA: 44m 33s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:32:26] Step 8560/10000 | train/loss: 0.4340 | train/step: 8560.0000 | ETA: 43m 38s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0547 | train/lr: 1.98e-05
+[2026-02-27 05:32:42] Step 8570/10000 | train/loss: 0.4776 | train/step: 8570.0000 | ETA: 43m 50s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:32:59] Step 8580/10000 | train/loss: 0.8071 | train/step: 8580.0000 | ETA: 43m 48s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:33:14] Step 8590/10000 | train/loss: 0.5084 | train/step: 8590.0000 | ETA: 43m 50s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:33:31] Step 8600/10000 | train/loss: 0.3652 | train/step: 8600.0000 | ETA: 44m 21s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 0.9648 | train/lr: 1.98e-05
+[2026-02-27 05:33:46] Step 8610/10000 | train/loss: 0.6853 | train/step: 8610.0000 | ETA: 35m 40s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:34:01] Step 8620/10000 | train/loss: 0.7028 | train/step: 8620.0000 | ETA: 35m 24s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:34:14] Step 8630/10000 | train/loss: 0.3857 | train/step: 8630.0000 | ETA: 34m 45s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:34:30] Step 8640/10000 | train/loss: 0.4929 | train/step: 8640.0000 | ETA: 34m 38s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 0.9648 | train/lr: 1.98e-05
+[2026-02-27 05:34:44] Step 8650/10000 | train/loss: 0.9782 | train/step: 8650.0000 | ETA: 34m 2s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:34:58] Step 8660/10000 | train/loss: 0.4272 | train/step: 8660.0000 | ETA: 34m 0s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:35:12] Step 8670/10000 | train/loss: 0.3993 | train/step: 8670.0000 | ETA: 33m 10s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:35:27] Step 8680/10000 | train/loss: 0.5062 | train/step: 8680.0000 | ETA: 32m 37s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0625 | train/lr: 1.98e-05
+[2026-02-27 05:35:41] Step 8690/10000 | train/loss: 0.2982 | train/step: 8690.0000 | ETA: 32m 6s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:35:57] Step 8700/10000 | train/loss: 0.9189 | train/step: 8700.0000 | ETA: 31m 38s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:36:10] Step 8710/10000 | train/loss: 0.5276 | train/step: 8710.0000 | ETA: 30m 54s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:36:24] Step 8720/10000 | train/loss: 0.4174 | train/step: 8720.0000 | ETA: 30m 27s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 0.7969 | train/lr: 1.98e-05
+[2026-02-27 05:36:37] Step 8730/10000 | train/loss: 0.5264 | train/step: 8730.0000 | ETA: 30m 20s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:36:51] Step 8740/10000 | train/loss: 0.6307 | train/step: 8740.0000 | ETA: 29m 38s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:37:06] Step 8750/10000 | train/loss: 0.6127 | train/step: 8750.0000 | ETA: 29m 35s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:37:20] Step 8760/10000 | train/loss: 0.4984 | train/step: 8760.0000 | ETA: 29m 20s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0781 | train/lr: 1.98e-05
+[2026-02-27 05:37:34] Step 8770/10000 | train/loss: 0.5011 | train/step: 8770.0000 | ETA: 29m 8s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:37:48] Step 8780/10000 | train/loss: 0.4000 | train/step: 8780.0000 | ETA: 28m 36s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:38:02] Step 8790/10000 | train/loss: 0.8470 | train/step: 8790.0000 | ETA: 28m 23s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:38:16] Step 8800/10000 | train/loss: 0.4279 | train/step: 8800.0000 | ETA: 27m 50s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0312 | train/lr: 1.98e-05
+[2026-02-27 05:38:30] Step 8810/10000 | train/loss: 0.5532 | train/step: 8810.0000 | ETA: 27m 43s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:38:44] Step 8820/10000 | train/loss: 0.6888 | train/step: 8820.0000 | ETA: 27m 39s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:38:58] Step 8830/10000 | train/loss: 0.5823 | train/step: 8830.0000 | ETA: 27m 31s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:39:12] Step 8840/10000 | train/loss: 0.4277 | train/step: 8840.0000 | ETA: 27m 20s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0234 | train/lr: 1.98e-05
+[2026-02-27 05:39:29] Step 8850/10000 | train/loss: 0.6824 | train/step: 8850.0000 | ETA: 27m 26s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:39:43] Step 8860/10000 | train/loss: 0.7474 | train/step: 8860.0000 | ETA: 27m 7s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:39:58] Step 8870/10000 | train/loss: 0.3720 | train/step: 8870.0000 | ETA: 27m 7s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:40:13] Step 8880/10000 | train/loss: 0.7851 | train/step: 8880.0000 | ETA: 26m 59s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1250 | train/lr: 1.98e-05
+[2026-02-27 05:40:31] Step 8890/10000 | train/loss: 0.5316 | train/step: 8890.0000 | ETA: 27m 32s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:40:45] Step 8900/10000 | train/loss: 0.5616 | train/step: 8900.0000 | ETA: 27m 23s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:40:59] Step 8910/10000 | train/loss: 0.4533 | train/step: 8910.0000 | ETA: 27m 6s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:41:13] Step 8920/10000 | train/loss: 0.6450 | train/step: 8920.0000 | ETA: 26m 49s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0391 | train/lr: 1.98e-05
+[2026-02-27 05:41:27] Step 8930/10000 | train/loss: 0.4351 | train/step: 8930.0000 | ETA: 26m 34s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:41:42] Step 8940/10000 | train/loss: 0.5388 | train/step: 8940.0000 | ETA: 26m 24s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:41:56] Step 8950/10000 | train/loss: 0.5943 | train/step: 8950.0000 | ETA: 25m 48s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:42:11] Step 8960/10000 | train/loss: 0.4428 | train/step: 8960.0000 | ETA: 25m 35s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 0.9180 | train/lr: 1.98e-05
+[2026-02-27 05:42:25] Step 8970/10000 | train/loss: 0.6529 | train/step: 8970.0000 | ETA: 25m 14s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:42:39] Step 8980/10000 | train/loss: 0.3808 | train/step: 8980.0000 | ETA: 24m 52s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:42:52] Step 8990/10000 | train/loss: 0.4261 | train/step: 8990.0000 | ETA: 23m 50s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:43:06] Step 9000/10000 | train/loss: 0.6774 | train/step: 9000.0000 | ETA: 23m 29s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0156 | train/lr: 1.98e-05
+[2026-02-27 05:43:40] 💾 Saved PEFT checkpoint: results/base_model/E43_70b_sft/checkpoints/step_9000 (LoRA=1120, embed/lm_head=2, projector=20)
+[2026-02-27 05:43:55] Step 9010/10000 | train/loss: 0.5496 | train/step: 9010.0000 | ETA: 29m 2s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:44:09] Step 9020/10000 | train/loss: 0.6663 | train/step: 9020.0000 | ETA: 28m 44s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:44:23] Step 9030/10000 | train/loss: 0.4308 | train/step: 9030.0000 | ETA: 28m 25s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:44:39] Step 9040/10000 | train/loss: 0.2968 | train/step: 9040.0000 | ETA: 28m 22s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0391 | train/lr: 1.98e-05
+[2026-02-27 05:44:54] Step 9050/10000 | train/loss: 0.7132 | train/step: 9050.0000 | ETA: 28m 6s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:45:08] Step 9060/10000 | train/loss: 0.5965 | train/step: 9060.0000 | ETA: 27m 45s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:45:21] Step 9070/10000 | train/loss: 0.3840 | train/step: 9070.0000 | ETA: 27m 14s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:45:34] Step 9080/10000 | train/loss: 0.7316 | train/step: 9080.0000 | ETA: 26m 52s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0703 | train/lr: 1.98e-05
+[2026-02-27 05:45:49] Step 9090/10000 | train/loss: 0.8103 | train/step: 9090.0000 | ETA: 26m 43s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:46:03] Step 9100/10000 | train/loss: 0.3585 | train/step: 9100.0000 | ETA: 26m 30s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:46:18] Step 9110/10000 | train/loss: 0.3991 | train/step: 9110.0000 | ETA: 21m 10s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:46:32] Step 9120/10000 | train/loss: 0.3663 | train/step: 9120.0000 | ETA: 20m 57s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 0.9922 | train/lr: 1.98e-05
+[2026-02-27 05:46:48] Step 9130/10000 | train/loss: 0.5410 | train/step: 9130.0000 | ETA: 21m 1s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:47:02] Step 9140/10000 | train/loss: 0.3855 | train/step: 9140.0000 | ETA: 20m 26s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:47:16] Step 9150/10000 | train/loss: 0.6785 | train/step: 9150.0000 | ETA: 20m 5s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:47:32] Step 9160/10000 | train/loss: 0.4904 | train/step: 9160.0000 | ETA: 20m 8s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0312 | train/lr: 1.98e-05
+[2026-02-27 05:47:45] Step 9170/10000 | train/loss: 0.5235 | train/step: 9170.0000 | ETA: 19m 58s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:47:59] Step 9180/10000 | train/loss: 0.7024 | train/step: 9180.0000 | ETA: 19m 49s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:48:13] Step 9190/10000 | train/loss: 0.5521 | train/step: 9190.0000 | ETA: 19m 27s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:48:26] Step 9200/10000 | train/loss: 0.6072 | train/step: 9200.0000 | ETA: 19m 6s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0469 | train/lr: 1.98e-05
+[2026-02-27 05:48:42] Step 9210/10000 | train/loss: 0.5902 | train/step: 9210.0000 | ETA: 18m 57s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:48:56] Step 9220/10000 | train/loss: 0.4580 | train/step: 9220.0000 | ETA: 18m 38s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:49:09] Step 9230/10000 | train/loss: 0.2095 | train/step: 9230.0000 | ETA: 18m 4s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:49:23] Step 9240/10000 | train/loss: 0.4736 | train/step: 9240.0000 | ETA: 17m 53s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 0.9570 | train/lr: 1.98e-05
+[2026-02-27 05:49:38] Step 9250/10000 | train/loss: 0.3734 | train/step: 9250.0000 | ETA: 17m 46s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:49:52] Step 9260/10000 | train/loss: 0.8878 | train/step: 9260.0000 | ETA: 17m 14s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:50:07] Step 9270/10000 | train/loss: 0.2225 | train/step: 9270.0000 | ETA: 17m 13s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:50:22] Step 9280/10000 | train/loss: 0.5293 | train/step: 9280.0000 | ETA: 17m 5s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 0.9609 | train/lr: 1.98e-05
+[2026-02-27 05:50:38] Step 9290/10000 | train/loss: 0.3337 | train/step: 9290.0000 | ETA: 17m 12s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:50:53] Step 9300/10000 | train/loss: 0.5876 | train/step: 9300.0000 | ETA: 17m 7s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:51:07] Step 9310/10000 | train/loss: 0.5027 | train/step: 9310.0000 | ETA: 16m 38s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:51:22] Step 9320/10000 | train/loss: 0.8107 | train/step: 9320.0000 | ETA: 16m 32s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 0.9922 | train/lr: 1.98e-05
+[2026-02-27 05:51:36] Step 9330/10000 | train/loss: 0.5588 | train/step: 9330.0000 | ETA: 16m 24s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:51:51] Step 9340/10000 | train/loss: 0.6730 | train/step: 9340.0000 | ETA: 16m 14s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:52:05] Step 9350/10000 | train/loss: 0.4287 | train/step: 9350.0000 | ETA: 15m 54s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:52:20] Step 9360/10000 | train/loss: 0.7244 | train/step: 9360.0000 | ETA: 15m 49s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 0.9727 | train/lr: 1.98e-05
+[2026-02-27 05:52:36] Step 9370/10000 | train/loss: 0.7932 | train/step: 9370.0000 | ETA: 15m 40s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:52:50] Step 9380/10000 | train/loss: 0.2971 | train/step: 9380.0000 | ETA: 15m 19s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:53:04] Step 9390/10000 | train/loss: 0.4424 | train/step: 9390.0000 | ETA: 14m 50s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:53:19] Step 9400/10000 | train/loss: 0.6111 | train/step: 9400.0000 | ETA: 14m 33s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0625 | train/lr: 1.98e-05
+[2026-02-27 05:53:32] Step 9410/10000 | train/loss: 0.4313 | train/step: 9410.0000 | ETA: 14m 18s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:53:49] Step 9420/10000 | train/loss: 0.5012 | train/step: 9420.0000 | ETA: 14m 18s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:54:03] Step 9430/10000 | train/loss: 0.4985 | train/step: 9430.0000 | ETA: 13m 58s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:54:17] Step 9440/10000 | train/loss: 0.6878 | train/step: 9440.0000 | ETA: 13m 41s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0469 | train/lr: 1.98e-05
+[2026-02-27 05:54:34] Step 9450/10000 | train/loss: 0.3538 | train/step: 9450.0000 | ETA: 13m 39s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:54:48] Step 9460/10000 | train/loss: 0.6711 | train/step: 9460.0000 | ETA: 13m 19s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:55:02] Step 9470/10000 | train/loss: 0.3385 | train/step: 9470.0000 | ETA: 12m 51s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:55:15] Step 9480/10000 | train/loss: 0.2707 | train/step: 9480.0000 | ETA: 12m 32s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0312 | train/lr: 1.97e-05
+[2026-02-27 05:55:28] Step 9490/10000 | train/loss: 0.4452 | train/step: 9490.0000 | ETA: 12m 15s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:55:42] Step 9500/10000 | train/loss: 0.3051 | train/step: 9500.0000 | ETA: 11m 56s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:56:30] 💾 Saved PEFT checkpoint: results/base_model/E43_70b_sft/checkpoints/step_9500 (LoRA=1120, embed/lm_head=2, projector=20)
+[2026-02-27 05:56:44] Step 9510/10000 | train/loss: 0.2367 | train/step: 9510.0000 | ETA: 15m 38s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:56:58] Step 9520/10000 | train/loss: 0.4198 | train/step: 9520.0000 | ETA: 15m 5s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1094 | train/lr: 1.97e-05
+[2026-02-27 05:57:14] Step 9530/10000 | train/loss: 0.7617 | train/step: 9530.0000 | ETA: 14m 56s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:57:27] Step 9540/10000 | train/loss: 0.6769 | train/step: 9540.0000 | ETA: 14m 34s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:57:41] Step 9550/10000 | train/loss: 0.5151 | train/step: 9550.0000 | ETA: 14m 3s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:57:56] Step 9560/10000 | train/loss: 0.3227 | train/step: 9560.0000 | ETA: 13m 45s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 0.9961 | train/lr: 1.97e-05
+[2026-02-27 05:58:10] Step 9570/10000 | train/loss: 0.4516 | train/step: 9570.0000 | ETA: 13m 30s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:58:23] Step 9580/10000 | train/loss: 0.2967 | train/step: 9580.0000 | ETA: 13m 10s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:58:38] Step 9590/10000 | train/loss: 0.4888 | train/step: 9590.0000 | ETA: 12m 59s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:58:51] Step 9600/10000 | train/loss: 0.3621 | train/step: 9600.0000 | ETA: 12m 35s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 0.9922 | train/lr: 1.97e-05
+[2026-02-27 05:59:05] Step 9610/10000 | train/loss: 0.4805 | train/step: 9610.0000 | ETA: 9m 12s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:59:22] Step 9620/10000 | train/loss: 0.5161 | train/step: 9620.0000 | ETA: 9m 5s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:59:35] Step 9630/10000 | train/loss: 0.3709 | train/step: 9630.0000 | ETA: 8m 41s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 05:59:50] Step 9640/10000 | train/loss: 0.1870 | train/step: 9640.0000 | ETA: 8m 31s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0703 | train/lr: 1.97e-05
+[2026-02-27 06:00:05] Step 9650/10000 | train/loss: 0.8893 | train/step: 9650.0000 | ETA: 8m 24s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 06:00:19] Step 9660/10000 | train/loss: 0.8311 | train/step: 9660.0000 | ETA: 8m 6s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 06:00:34] Step 9670/10000 | train/loss: 0.4537 | train/step: 9670.0000 | ETA: 7m 53s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 06:00:48] Step 9680/10000 | train/loss: 0.6682 | train/step: 9680.0000 | ETA: 7m 45s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.3516 | train/lr: 1.97e-05
+[2026-02-27 06:01:02] Step 9690/10000 | train/loss: 0.6600 | train/step: 9690.0000 | ETA: 7m 24s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 06:01:17] Step 9700/10000 | train/loss: 0.5191 | train/step: 9700.0000 | ETA: 7m 19s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 06:01:33] Step 9710/10000 | train/loss: 0.8127 | train/step: 9710.0000 | ETA: 7m 7s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 06:01:47] Step 9720/10000 | train/loss: 0.5383 | train/step: 9720.0000 | ETA: 6m 45s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 0.9961 | train/lr: 1.97e-05
+[2026-02-27 06:01:59] Step 9730/10000 | train/loss: 0.5502 | train/step: 9730.0000 | ETA: 6m 30s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 06:02:12] Step 9740/10000 | train/loss: 0.7024 | train/step: 9740.0000 | ETA: 6m 10s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 06:02:25] Step 9750/10000 | train/loss: 0.4408 | train/step: 9750.0000 | ETA: 5m 50s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 06:02:39] Step 9760/10000 | train/loss: 0.4337 | train/step: 9760.0000 | ETA: 5m 36s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0547 | train/lr: 1.97e-05
+[2026-02-27 06:02:55] Step 9770/10000 | train/loss: 0.3759 | train/step: 9770.0000 | ETA: 5m 25s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 06:03:09] Step 9780/10000 | train/loss: 0.4353 | train/step: 9780.0000 | ETA: 5m 10s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 06:03:25] Step 9790/10000 | train/loss: 0.6670 | train/step: 9790.0000 | ETA: 5m 0s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 06:03:38] Step 9800/10000 | train/loss: 0.3554 | train/step: 9800.0000 | ETA: 4m 41s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 0.8984 | train/lr: 1.97e-05
+[2026-02-27 06:03:52] Step 9810/10000 | train/loss: 0.5583 | train/step: 9810.0000 | ETA: 4m 24s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 06:04:08] Step 9820/10000 | train/loss: 0.4184 | train/step: 9820.0000 | ETA: 4m 14s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 06:04:23] Step 9830/10000 | train/loss: 0.6825 | train/step: 9830.0000 | ETA: 4m 4s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 06:04:38] Step 9840/10000 | train/loss: 0.4265 | train/step: 9840.0000 | ETA: 3m 53s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0000 | train/lr: 1.97e-05
+[2026-02-27 06:04:53] Step 9850/10000 | train/loss: 0.6023 | train/step: 9850.0000 | ETA: 3m 41s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 06:05:08] Step 9860/10000 | train/loss: 0.3348 | train/step: 9860.0000 | ETA: 3m 28s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 06:05:24] Step 9870/10000 | train/loss: 0.5681 | train/step: 9870.0000 | ETA: 3m 13s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 06:05:39] Step 9880/10000 | train/loss: 0.7684 | train/step: 9880.0000 | ETA: 2m 59s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0859 | train/lr: 1.97e-05
+[2026-02-27 06:05:54] Step 9890/10000 | train/loss: 0.3394 | train/step: 9890.0000 | ETA: 2m 44s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 06:06:08] Step 9900/10000 | train/loss: 0.5289 | train/step: 9900.0000 | ETA: 2m 29s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 06:06:25] Step 9910/10000 | train/loss: 0.3838 | train/step: 9910.0000 | ETA: 2m 17s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 06:06:38] Step 9920/10000 | train/loss: 0.7152 | train/step: 9920.0000 | ETA: 2m 0s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 0.9844 | train/lr: 1.97e-05
+[2026-02-27 06:06:54] Step 9930/10000 | train/loss: 0.3185 | train/step: 9930.0000 | ETA: 1m 45s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 06:07:08] Step 9940/10000 | train/loss: 0.4932 | train/step: 9940.0000 | ETA: 1m 29s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 06:07:24] Step 9950/10000 | train/loss: 0.6795 | train/step: 9950.0000 | ETA: 1m 15s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 06:07:40] Step 9960/10000 | train/loss: 0.8714 | train/step: 9960.0000 | ETA: 1m 0s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.1172 | train/lr: 1.97e-05
+[2026-02-27 06:07:55] Step 9970/10000 | train/loss: 0.6910 | train/step: 9970.0000 | ETA: 45s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 06:08:09] Step 9980/10000 | train/loss: 0.2489 | train/step: 9980.0000 | ETA: 30s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 06:08:24] Step 9990/10000 | train/loss: 0.6627 | train/step: 9990.0000 | ETA: 15s | train/gpu_allocated_gb: 161.0574
+[2026-02-27 06:08:40] Step 10000/10000 | train/loss: 0.4609 | train/step: 10000.0000 | ETA: 0s | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.0234 | train/lr: 1.97e-05
+[2026-02-27 06:09:16] 💾 Saved PEFT checkpoint: results/base_model/E43_70b_sft/checkpoints/step_10000 (LoRA=1120, embed/lm_head=2, projector=20)
+[2026-02-27 06:09:16] ================================================================================
+[2026-02-27 06:09:16] Training completed!
+================================================================================
+Configuration:
+================================================================================
+experiment:
+  name: E43_70b_sft
+  seed: 42
+  run_name: E43_70b_sft_20260227_212847
+device:
+  type: cuda
+paths:
+  output_dir: results/base_model/E43_70b_sft
+  checkpoint_dir: results/base_model/E43_70b_sft/checkpoints
+model:
+  model_path: /orange/xujie/liang.renjie/DATA/weights/Llama-3.3-70B-Instruct
+  model_name: llava-llama
+  use_flash_attn: False
+  gradient_checkpointing: True
+  train_projector_only: False
+  pretrain_checkpoint: ./results/base_model/E42_70b_projector/checkpoints/step_9000
+  freeze_projector: True
+  lora_r: 64
+  lora_alpha: 128
+  lora_dropout: 0.05
+  lora_target_modules: ['down_proj', 'gate_proj', 'k_proj', 'o_proj', 'q_proj', 'up_proj', 'v_proj']
+  projector_type: independent
+  projector_layers: 2
+  tokens_per_embedding: 1
+data:
+  train_embeddings_npz: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/ViSD-Boost-embeds/train_embeds.npz
+  val_embeddings_npz: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/ViSD-Boost-embeds/valid_embeds.npz
+  whole_ct_key: ct_clip_max
+  whole_ct_dim: 512
+  whole_ct_embeddings_npz_train: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/CT-CLIP-embeds/train_embeds.npz
+  whole_ct_embeddings_npz_val: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/CT-CLIP-embeds/valid_embeds.npz
+  organ_keys: ['lung', 'heart', 'esophagus', 'aorta']
+  train_vqa_json: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/vqa/train_vqa.json
+  val_vqa_json: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/vqa/valid_vqa.json
+  sample_types: ['image']
+  train_tasks: ['report_generation']
+  batch_size: 4
+  num_workers: 4
+  use_chat_template: True
+  system_prompt: detailed
+training:
+  max_steps: 10000
+  save_every: 500
+  optimizer:
+    type: adamw
+    lr: 2e-05
+    weight_decay: 0.05
+    betas: [0.9, 0.999]
+    eps: 1e-08
+    separate_wd_groups: True
+  scheduler:
+    type: warmup_cosine
+    warmup_steps: 500
+    min_lr_ratio: 0.01
+  grad_accum_steps: 8
+  max_seq_length_by_task:
+    report_generation: 2048
+  use_amp: True
+  label_smoothing: 0.0
+validation:
+  skip_validation: True
+  max_new_tokens_by_task:
+    report_generation: 512
+  temperature: 0.7
+  top_p: 0.95
+  top_k: 50
+  repetition_penalty: 1.1
+checkpoint:
+  keep_last_n: 20
+logging:
+  use_console: True
+  log_every: 10
+generation:
+  temperature: 0.7
+  top_p: 0.95
+  top_k: 50
+  repetition_penalty: 1.1
+================================================================================
+[2026-02-27 21:28:47] ================================================================================
+[2026-02-27 21:28:47] Stage 3 Turn: LLaVA Report Generation Training
+[2026-02-27 21:28:47] ================================================================================
+[2026-02-27 21:28:47] 🤖 Loading base model: llava-llama
+[2026-02-27 21:28:47] 📂 Model path: /orange/xujie/liang.renjie/DATA/weights/Llama-3.3-70B-Instruct
+[2026-02-27 21:28:47] ⚡ Flash attention: False
+[2026-02-27 21:28:47] 💾 Quantization: 8bit=False, 4bit=False
+[2026-02-27 21:30:24] ✅ Base model loaded successfully
+[2026-02-27 21:30:24] 📊 Model config: hidden_size=8192, vocab_size=128257
+[2026-02-27 21:30:24] 🔤 Tokenizer vocab size: 128257
+[2026-02-27 21:30:24] 🔧 Per-organ input dims: {'whole_ct': 512, 'lung': 256, 'heart': 256, 'esophagus': 256, 'aorta': 256}
+[2026-02-27 21:30:26] 🔧 Projector: independent (5 MLPs), 2-layer, per-organ dims={'whole_ct': 512, 'lung': 256, 'heart': 256, 'esophagus': 256, 'aorta': 256}, tokens_per_embedding=1
+[2026-02-27 21:30:26] 🔧 Projector initialized: 256 -> 8192
+[2026-02-27 21:30:27] 📦 Loaded projector.pt from merged dir: 20 keys
+[2026-02-27 21:30:27] 🎯 Added 4 task tokens + 5 organ tokens + 1 provided token
+[2026-02-27 21:30:27] 🔤 Final tokenizer vocab size: 128267
+[2026-02-27 21:30:27] 📋 Using config-specified target modules: ['down_proj', 'gate_proj', 'k_proj', 'o_proj', 'q_proj', 'up_proj', 'v_proj']
+[2026-02-27 21:30:40] 🎯 Training mode: LoRA fine-tuning
+[2026-02-27 21:30:40] 🔧 LoRA config: r=64, alpha=128, dropout=0.05
+[2026-02-27 21:30:40] 🎯 Target modules (7): ['down_proj', 'gate_proj', 'k_proj', 'o_proj', 'q_proj', 'up_proj', 'v_proj']
+[2026-02-27 21:30:40] 🔒 Projector FROZEN (freeze_projector=True)
+[2026-02-27 21:30:41] 📈 Training summary:
+[2026-02-27 21:30:41]    🎯 Total parameters: 71730.47M
+[2026-02-27 21:30:41]    🔥 Trainable parameters: 2929.90M (4.1%)
+[2026-02-27 21:30:41]    📱 Device: cuda, dtype: torch.bfloat16
+[2026-02-27 21:30:41] Total parameters: 71730.47M
+[2026-02-27 21:30:41] Trainable parameters: 2929.90M
+[2026-02-27 21:30:41] ========== ViSDVQADataset.__init__ START ==========
+[2026-02-27 21:30:41] embeddings_npz: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/ViSD-Boost-embeds/train_embeds.npz
+[2026-02-27 21:30:41] vqa_json_path: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/vqa/train_vqa.json
+[2026-02-27 21:30:41] train_tasks: ['report_generation']
+[2026-02-27 21:30:41] max_samples: None
+[2026-02-27 21:30:41] sample_types: ['image']
+[2026-02-27 21:30:41] use_chat_template: True
+[2026-02-27 21:30:41] system_prompt: detailed
+[2026-02-27 21:30:41] whole_ct_npz: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/CT-CLIP-embeds/train_embeds.npz
+[2026-02-27 21:30:41] whole_ct_dim: 512
+[2026-02-27 21:30:41] oversample_rare_findings: False (min_positives=3, factor=3.0)
+[2026-02-27 21:30:41] label_in_prompt: False (csv=None)
+[2026-02-27 21:30:41] organ_report_mode: None (json=None, single_organ_ratio=0.4)
+[2026-02-27 21:30:41] Resolved system_prompt: You are an experienced radiologist specializing in chest CT interpretation. Generate a detailed findings report covering all anatomical structures.
+[2026-02-27 21:30:41] Allowed tasks set: {'report_generation'}
+[2026-02-27 21:30:41] embedding_keys (NPZ): ['ct_clip_max', 'lung', 'heart', 'esophagus', 'aorta']
+[2026-02-27 21:30:41] NPZ keys: ['sample_ids', 'whole_ct_attention', 'whole_ct_weighted', 'lung', 'heart', 'esophagus', 'aorta']
+[2026-02-27 21:30:41] NPZ sample_ids count: 46407
+[2026-02-27 21:30:41] NPZ sample_ids first 5: ['train_6002_a_1.nii.gz', 'train_6002_a_2.nii.gz', 'train_3893_a_2.nii.gz', 'train_3893_a_1.nii.gz', 'train_3020_a_2.nii.gz']
+[2026-02-27 21:30:41] Separate whole_ct NPZ keys: ['sample_ids', 'ct_clip_avg', 'ct_clip_max', 'ct_clip_avgmax']
+[2026-02-27 21:30:41] whole_ct NPZ sample_ids count: 47149
+[2026-02-27 21:30:42] whole_ct from separate NPZ: key=ct_clip_max, shape=torch.Size([47149, 512])
+[2026-02-27 21:30:44] Heterogeneous dims: whole_ct=512, organs=256, max=512
+[2026-02-27 21:30:44] whole_ct aligned: 46407/46407 samples matched
+[2026-02-27 21:30:44] Embedding shapes and dtypes:
+[2026-02-27 21:30:44]   ct_clip_max: shape=torch.Size([46407, 512]), dtype=torch.float32, min=0.0145, max=0.8041
+[2026-02-27 21:30:44]   lung: shape=torch.Size([46407, 512]), dtype=torch.float32, min=-0.2932, max=0.2930
+[2026-02-27 21:30:44]   heart: shape=torch.Size([46407, 512]), dtype=torch.float32, min=-0.2383, max=0.2509
+[2026-02-27 21:30:44]   esophagus: shape=torch.Size([46407, 512]), dtype=torch.float32, min=-0.2325, max=0.2238
+[2026-02-27 21:30:44]   aorta: shape=torch.Size([46407, 512]), dtype=torch.float32, min=-0.2442, max=0.2307
+[2026-02-27 21:30:44] image_to_idx mapping size: 46407
+[2026-02-27 21:30:44] image_to_idx first 5: {'train_6002_a_1': 0, 'train_6002_a_2': 1, 'train_3893_a_2': 2, 'train_3893_a_1': 3, 'train_3020_a_2': 4}
+[2026-02-27 21:30:50] VQA JSON loaded, total items: 693760
+[2026-02-27 21:30:50] VQA first item keys: ['id', 'image', 'conversations']
+[2026-02-27 21:30:50] VQA first item id: long_answer_0
+[2026-02-27 21:30:50] VQA first item image: train_1_a_1.nii.gz
+[2026-02-27 21:30:50] VQA first item conversations count: 8
+[2026-02-27 21:30:50] VQA task breakdown (before filtering): {'long_answer': 280999, 'multiple_choice': 46902, 'short_answer': 318710, 'report_generation': 47149}
+[2026-02-27 21:30:53] WARNING: 742 images not found in NPZ
+[2026-02-27 21:30:53] Missing images (first 10): ['train_39_b_1.nii.gz', 'train_39_b_2.nii.gz', 'train_39_b_4.nii.gz', 'train_47_a_1.nii.gz', 'train_47_a_2.nii.gz', 'train_47_a_4.nii.gz', 'train_55_b_1.nii.gz', 'train_55_b_2.nii.gz', 'train_55_b_4.nii.gz', 'train_144_a_1.nii.gz']
+[2026-02-27 21:30:53] Total samples built (before max_samples): 46407
+[2026-02-27 21:30:53] Task breakdown (after filtering): {'report_generation': 46407}
+[2026-02-27 21:30:53] First sample structure:
+[2026-02-27 21:30:53]   emb_tensor shape: torch.Size([5, 512])
+[2026-02-27 21:30:53]   prompt_text: b'<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\nYou are an experienced radiologist specializing in chest CT interpretation. Generate a detailed findings report covering all anatomical structures.<|eot_id|><|start_header_id|>user<|end_header_id|>\n\nI will provide 5 embeddings from the same CT volume, representing different anatomical regions: whole CT <whole_ct>, lungs <lung>, heart <heart>, esophagus <esophagus>, and aorta <aorta>.\n<report_generation>\nGenerate radiology report for the CT.<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n'
+[2026-02-27 21:30:53]   target_text: b'Findings: Multiple venous collaterals are present in the anterior left chest wall and are associated with the anterior jugular vein at the level of the right sternoclavicular junction. Left subclavian vein collapsed (chronic occlusion pathology?). Trachea, both main bronchi are open. Calcific plaques are observed in the aortic arch. Other mediastinal main vascular structures, heart contour, size are normal. Thoracic aorta diameter is normal. Pericardial effusion-thickening was not observed. Thoracic esophagus calibration was normal and no significant tumoral wall thickening was detected. No enlarged lymph nodes in prevascular, pre-paratracheal, subcarinal or bilateral hilar-axillary pathological dimensions were detected. When examined in the lung parenchyma window; Linear atelectasis is present in both lung parenchyma. Subsegmental atelectasis is observed in the right middle lobe. Thickening of the bronchial wall and peribronchial budding tree-like reticulonodular densities are observed in the bilateral lower lobes. Peribronchial minimal consolidation is seen in the lower lobes in places. The findings were evaluated primarily in favor of the infectious process. The left kidney partially entering the section is atrophic. The right kidney could not be evaluated because it did not enter the section. Other upper abdominal organs included in the sections are normal. No space-occupying lesion was detected in the liver that entered the cross-sectional area. Bilateral adrenal glands were normal and no space-occupying lesion was detected. There are osteophytes with anterior extension in the thoracic vertebrae. Impression:  Multiple venous collaterals in the anterior left chest wall and collapsed appearance in the left subclavian vein (chronic occlusion?).  Thickening of the bronchial wall in both lungs.  Peribronchial reticulonodular densities in the lower lobes, minimal consolidations (infection process?).  Atelectasis in both lungs.  Thoracic spondylosis.<|eot_id|>'
+[2026-02-27 21:30:53]   task_type: report_generation
+[2026-02-27 21:30:53]   sample_id: report_generation_0_turn0
+[2026-02-27 21:30:53]   image: train_1_a_1.nii.gz
+[2026-02-27 21:30:53] ========== ViSDVQADataset.__init__ END ==========
+[2026-02-27 21:30:53] Skipping validation dataset creation
+[2026-02-27 21:30:53] Train samples: 46407
+[2026-02-27 21:30:53] Val samples: 0 (validation skipped)
+[2026-02-27 21:30:53] Optimizer: 1122 params with WD, 0 params without WD
+[2026-02-27 21:30:53] Built ADAMW optimizer: lr=2e-05, wd=0.05
+[2026-02-27 21:30:53] Built warmup+cosine scheduler: warmup=500, total=10000, min_ratio=0.01
+[2026-02-27 21:31:10] Step 10/10000 | train/loss: 0.5311 | train/step: 10.0000 | ETA: 4h 33m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 21:31:25] Step 20/10000 | train/loss: 1.1578 | train/step: 20.0000 | ETA: 4h 20m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 21:31:39] Step 30/10000 | train/loss: 1.0430 | train/step: 30.0000 | ETA: 4h 11m | train/gpu_allocated_gb: 161.0574
+[2026-02-27 21:31:54] Step 40/10000 | train/loss: 0.8219 | train/step: 40.0000 | ETA: 4h 10m | train/gpu_allocated_gb: 155.1976 | train/grad_norm: 1.4844 | train/lr: 2.00e-07
+[2026-02-27 21:32:10] Step 50/10000 | train/loss: 0.8524 | train/step: 50.0000 | ETA: 4h 13m | train/gpu_allocated_gb: 161.0574

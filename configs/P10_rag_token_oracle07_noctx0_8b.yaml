@@ -13,12 +13,12 @@ paths:
   output_dir: "results/rag_oracle_{datetime}/P10_rag_token_oracle07_noctx0_8b"
 
 model:
-  model_path: "results/base_model/E29_merged"
+  model_path: "results/base_8b/checkpoint"
   model_name: "llava-llama"
   use_flash_attn: false
   gradient_checkpointing: true
   train_projector_only: false
-  pretrain_checkpoint: "results/base_model/E29_merged"
+  pretrain_checkpoint: "results/base_8b/checkpoint"
   freeze_projector: true
   lora_r: 32
   lora_alpha: 64

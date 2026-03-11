@@ -10,7 +10,7 @@ device:
 paths:
   output_dir: ./results/stage3_turn/E29_v2_final
 model:
-  model_path: /orange/xujie/liang.renjie/DATA/weights/Llama-3.1-8B-Instruct
+  model_path: /path/to/Llama-3.1-8B-Instruct
   model_name: llava-llama
   use_flash_attn: false
   gradient_checkpointing: true

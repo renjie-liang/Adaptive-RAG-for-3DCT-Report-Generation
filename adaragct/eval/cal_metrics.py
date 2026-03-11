@@ -62,15 +62,15 @@ def parse_args():
     parser.add_argument('--output', type=str, default=None, help='Path to save metrics JSON')
     parser.add_argument('--compute-green', action=argparse.BooleanOptionalAction, default=False, help='Compute GREEN score (LLM-based). Use --compute-green to enable.')
     parser.add_argument('--green-model-path', type=str,
-                        default="/orange/xujie/liang.renjie/DATA/weights/GREEN-RadLlama2-7b",
+                        default="/path/to/GREEN-RadLlama2-7b",
                         help='Path to GREEN model weights')
     parser.add_argument('--compute-llama-score', action=argparse.BooleanOptionalAction, default=False, help='Compute Llama Score (slow). Use --compute-llama-score to enable.')
     parser.add_argument('--compute-clinical-efficacy', action=argparse.BooleanOptionalAction, default=True, help='Compute clinical efficacy for report_generation. Use --no-compute-clinical-efficacy to skip.')
     parser.add_argument('--llama-model-path', type=str,
-                        default="/orange/xujie/liang.renjie/DATA/weights/Meta-Llama-3-70B-Instruct",
+                        default="/path/to/Meta-Llama-3-70B-Instruct",
                         help='Path to Llama model for Llama Score')
     parser.add_argument('--radbert-checkpoint', type=str,
-                        default="/orange/xujie/liang.renjie/DATA/weights/CT-CLIP/RadBertClassifier.pth",
+                        default="/path/to/CT-CLIP/RadBertClassifier.pth",
                         help='Path to RadBERT checkpoint for clinical efficacy')
     parser.add_argument(
         '--clinical-labels-csv',

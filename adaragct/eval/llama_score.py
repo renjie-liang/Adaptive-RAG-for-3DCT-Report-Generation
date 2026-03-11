@@ -149,7 +149,7 @@ def compute_llama_score(
     references: List[str],
     task_type: str = "report_generation",
     questions: Optional[List[str]] = None,
-    model_path: str = "/orange/xujie/liang.renjie/DATA/weights/Meta-Llama-3-70B-Instruct",
+    model_path: str = "/path/to/Meta-Llama-3-70B-Instruct",
     temperature: float = 0.0,
     max_tokens: int = 256,
     tensor_parallel_size: int = 1
@@ -336,7 +336,7 @@ def main():
     parser.add_argument(
         '--model_path',
         type=str,
-        default="/orange/xujie/liang.renjie/DATA/weights/Meta-Llama-3-70B-Instruct",
+        default="/path/to/Meta-Llama-3-70B-Instruct",
         help='Path to Meta-Llama-3.1-70B-Instruct model'
     )
     parser.add_argument(

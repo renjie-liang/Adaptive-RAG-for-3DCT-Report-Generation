@@ -2,7 +2,7 @@
 
 AdaRAG-CT is a retrieval-augmented framework for 3D CT report generation. It augments CT representations with adaptive textual context to improve report quality.
 
-Project repository on Hugging Face: [LiangRenjie/AdaRAG-CT](https://huggingface.co/LiangRenjie/AdaRAG-CT)
+Project repository: will be released after review.
 
 ## Overview
 
@@ -19,7 +19,7 @@ pip install -r requirements.txt
 ## Data
 
 - CT-RATE dataset: [ibrahimhamamci/CT-RATE](https://huggingface.co/datasets/ibrahimhamamci/CT-RATE)
-- This repository is self-contained: download the files from [LiangRenjie/AdaRAG-CT](https://huggingface.co/LiangRenjie/AdaRAG-CT) and keep the directory structure unchanged.
+- This repository is self-contained. Keep the directory structure unchanged after download.
 - Training and inference dependencies are organized under `data/`.
 
 ## Repository Layout
@@ -33,21 +33,22 @@ AdaRAG-CT/
 │   ├── oracle/
 │   └── retrieval/
 └── results/
-    ├── base_model/
-    │   ├── E29_merged/
-    │   └── E43_merged/
+    ├── base_8b/
+    │   └── checkpoint/
+    ├── base_70b/
+    │   └── checkpoint/
     ├── adaragct_8b/
     ├── adaragct_70b/
 ```
 
 ## Results Summary
 
-| Model | Clinical F1 | BLEU-4 | ROUGE-L | LLaMA Score |
-|-------|-------------|--------|---------|-------------|
-| Base 8B | 0.455 | 0.205 | 0.315 | 7.297 |
-| AdaRAG-CT 8B | 0.480 | 0.242 | 0.354 | 7.747 |
-| Base 70B | 0.414 | 0.208 | 0.316 | - |
-| AdaRAG-CT 70B | 0.463 | 0.252 | 0.342 | - |
+| Model | Clinical Precision | Clinical Recall | Clinical F1 | BLEU-4 | ROUGE-L | LLaMA Score |
+|-------|--------------------|-----------------|-------------|--------|---------|-------------|
+| Base 8B | 0.474 | 0.469 | 0.455 | 0.205 | 0.315 | 7.297 |
+| AdaRAG-CT 8B | 0.502 | 0.520 | 0.480 | 0.242 | 0.354 | 7.747 |
+| Base 70B | 0.522 | 0.395 | 0.414 | 0.208 | 0.316 | - |
+| AdaRAG-CT 70B | 0.470 | 0.524 | 0.463 | 0.252 | 0.342 | - |
 
 ## Inference
 
