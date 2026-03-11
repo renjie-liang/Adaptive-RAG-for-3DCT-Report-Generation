@@ -1,0 +1,89 @@
+# E29_v2: Phase 2 Final Production Version
+# Base: CT-CLIP max (512-dim) + independent projector + chat template + LoRA SFT
+# Changes from E29: max_steps=8000, keep_last_n=40 (extended training for production checkpoint)
+
+experiment:
+  name: E29_v2_final
+  seed: 42
+device:
+  type: cuda
+paths:
+  output_dir: ./results/stage3_turn/E29_v2_final
+model:
+  model_path: /orange/xujie/liang.renjie/DATA/weights/Llama-3.1-8B-Instruct
+  model_name: llava-llama
+  use_flash_attn: false
+  gradient_checkpointing: true
+  train_projector_only: false
+  pretrain_checkpoint: ./results/base_model/E26_ctclip_max/checkpoints/step_9000.pt
+  freeze_projector: true
+  lora_r: 128
+  lora_alpha: 256
+  lora_dropout: 0.05
+  lora_target_modules:
+    - down_proj
+    - gate_proj
+    - k_proj
+    - o_proj
+    - q_proj
+    - up_proj
+    - v_proj
+  projector_type: independent
+  projector_layers: 2
+  tokens_per_embedding: 1
+data:
+  train_embeddings_npz: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/ViSD-Boost-embeds/train_embeds.npz
+  val_embeddings_npz: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/ViSD-Boost-embeds/valid_embeds.npz
+  whole_ct_key: ct_clip_max
+  whole_ct_dim: 512
+  whole_ct_embeddings_npz_train: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/CT-CLIP-embeds/train_embeds.npz
+  whole_ct_embeddings_npz_val: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/CT-CLIP-embeds/valid_embeds.npz
+  organ_keys:
+  - lung
+  - heart
+  - esophagus
+  - aorta
+  train_vqa_json: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/vqa/train_vqa.json
+  val_vqa_json: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/vqa/valid_vqa.json
+  sample_types:
+  - image
+  train_tasks:
+  - report_generation
+  batch_size: 32
+  num_workers: 16
+  use_chat_template: true
+  system_prompt: detailed
+training:
+  max_steps: 8000
+  save_every: 250
+  optimizer:
+    type: adamw
+    lr: 0.00002
+    weight_decay: 0.05
+    betas:
+    - 0.9
+    - 0.999
+    eps: 1.0e-08
+    separate_wd_groups: true
+  scheduler:
+    type: warmup_cosine
+    warmup_steps: 500
+    min_lr_ratio: 0.01
+  grad_accum_steps: 1
+  max_seq_length_by_task:
+    report_generation: 2048
+  use_amp: true
+  label_smoothing: 0.0
+validation:
+  skip_validation: true
+  max_new_tokens_by_task:
+    report_generation: 512
+  temperature: 0.7
+  top_p: 0.95
+  top_k: 50
+  repetition_penalty: 1.1
+checkpoint:
+  keep_last_n: 40
+logging:
+  use_console: true
+  log_every: 10

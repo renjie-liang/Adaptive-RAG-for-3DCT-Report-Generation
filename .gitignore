@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.cursor/
+.windsurf/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Logs and outputs
+*.log
+wandb/
+out_slurm/
+slurm_out*/
+*.out
+
+# Large files (use HuggingFace for these)
+*.pt
+*.bin
+*.safetensors
+*.npz
+*.npy
+*.pkl
+*.pickle
+*.jsonl
+*.h5
+
+# Results and checkpoints (upload separately)
+results/
+checkpoints/
+
+# Temporary
+tmp/
+*.tmp

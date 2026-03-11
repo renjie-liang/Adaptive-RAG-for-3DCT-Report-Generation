@@ -1,0 +1,32 @@
+# Core dependencies
+torch
+torchvision
+transformers
+accelerate
+numpy
+pyyaml
+
+# Data processing
+einops
+scikit-learn
+tqdm
+psutil
+
+# Text processing
+regex
+ftfy
+beartype
+
+# Evaluation metrics
+sacrebleu
+pycocoevalcap
+
+# RAG components (stage3_rag)
+faiss-cpu
+spacy
+
+# Model components
+vector-quantize-pytorch
+
+# Optional: WandB logging (disable in debug configs)
+# wandb

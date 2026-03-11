@@ -1,0 +1,73 @@
+# P10: RAG Token Training — 8B, oracle_ratio=0.7 + no_context_rate=0.0
+# Based on P09. Additional change: remove no_context samples entirely.
+# Hypothesis: every sample sees "trigger→context", reinforcing trigger behavior.
+
+experiment:
+  name: "P10_rag_token_oracle07_noctx0_8b"
+  seed: 42
+
+device:
+  type: "cuda"
+
+paths:
+  output_dir: "results/rag_oracle_{datetime}/P10_rag_token_oracle07_noctx0_8b"
+
+model:
+  model_path: "results/base_model/E29_merged"
+  model_name: "llava-llama"
+  use_flash_attn: false
+  gradient_checkpointing: true
+  train_projector_only: false
+  pretrain_checkpoint: "results/base_model/E29_merged"
+  freeze_projector: true
+  lora_r: 32
+  lora_alpha: 64
+  lora_dropout: 0.05
+  lora_target_modules: ["down_proj", "gate_proj", "k_proj", "o_proj", "q_proj", "up_proj", "v_proj"]
+  projector_type: "independent"
+  projector_layers: 2
+  tokens_per_embedding: 1
+
+data:
+  train_embeddings_npz: "/orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/ViSD-Boost-embeds/train_embeds.npz"
+  val_embeddings_npz: "/orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/ViSD-Boost-embeds/valid_embeds.npz"
+  val_organ_reports_json: "/orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/vqa/organ_report_generation/valid_organ_reports.json"
+  whole_ct_key: "ct_clip_max"
+  whole_ct_dim: 512
+  whole_ct_embeddings_npz_train: "/orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/CT-CLIP-embeds/train_embeds.npz"
+  whole_ct_embeddings_npz_val: "/orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/CT-CLIP-embeds/valid_embeds.npz"
+  organ_keys: ["lung", "heart", "esophagus", "aorta"]
+  train_reports_csv: "/orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/radiology_text_reports/train_reports.csv"
+  oracle_context_jsonl: "results/P2_rag/oracle/oracle_context_top3.jsonl"
+  real_context_jsonl: "results/P2_rag/real_retrieval/retrieval_context_top3.jsonl"
+  batch_size: 8
+  num_workers: 4
+  use_chat_template: true
+  system_prompt: "detailed"
+
+rag_token:
+  no_context_rate: 0.0        # P09=0.1 → 0.0 (all samples get context)
+  oracle_ratio: 0.7           # same as P09 (real_rag = 1-0.0-0.7 = 0.3)
+  max_rag_per_sample: 4       # unchanged from P05
+
+training:
+  max_steps: 10000
+  save_every: 500
+  optimizer:
+    type: "adamw"
+    lr: 1.0e-5
+    weight_decay: 0.05
+    betas: [0.9, 0.999]
+    eps: 1.0e-8
+  scheduler:
+    type: "warmup_cosine"
+    warmup_steps: 200
+    min_lr_ratio: 0.01
+  grad_accum_steps: 2
+  max_seq_length_by_task:
+    report_generation: 4096
+  use_amp: true
+
+logging:
+  use_console: true
+  log_every: 10
