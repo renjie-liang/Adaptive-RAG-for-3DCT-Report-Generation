@@ -29,17 +29,17 @@ model:
   tokens_per_embedding: 1
 
 data:
-  train_embeddings_npz: "/orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/ViSD-Boost-embeds/train_embeds.npz"
-  val_embeddings_npz: "/orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/ViSD-Boost-embeds/valid_embeds.npz"
-  val_organ_reports_json: "/orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/vqa/organ_report_generation/valid_organ_reports.json"
+  train_embeddings_npz: "data/embeddings/visd_boost/train_embeds.npz"
+  val_embeddings_npz: "data/embeddings/visd_boost/valid_embeds.npz"
+  val_organ_reports_json: "data/annotations/valid_organ_reports.json"
   whole_ct_key: "ct_clip_max"
   whole_ct_dim: 512
-  whole_ct_embeddings_npz_train: "/orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/CT-CLIP-embeds/train_embeds.npz"
-  whole_ct_embeddings_npz_val: "/orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/CT-CLIP-embeds/valid_embeds.npz"
+  whole_ct_embeddings_npz_train: "data/embeddings/ct_clip/train_embeds.npz"
+  whole_ct_embeddings_npz_val: "data/embeddings/ct_clip/valid_embeds.npz"
   organ_keys: ["lung", "heart", "esophagus", "aorta"]
-  train_reports_csv: "/orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/radiology_text_reports/train_reports.csv"
-  oracle_context_jsonl: "results/P2_rag/oracle/oracle_context_top3.jsonl"
-  real_context_jsonl: "results/P2_rag/real_retrieval/retrieval_context_top3.jsonl"
+  train_reports_csv: "data/annotations/train_reports.csv"
+  oracle_context_jsonl: "data/oracle/oracle_context_top3.jsonl"
+  real_context_jsonl: "data/retrieval/retrieval_context_top3.jsonl"
   batch_size: 8
   num_workers: 4
   use_chat_template: true

@@ -43,7 +43,8 @@ from adaragct.constants import ORGAN_TOKENS, ORGAN_TOKEN_NAMES, PROVIDED_TOKEN
 
 from llava.constants import IGNORE_INDEX
 
-from adaragct.data.oracle_dataset import OracleTrainDataset, collate_fn_oracle, RET_START_TOKEN, RET_END_TOKEN, RAG_TOKEN
+from adaragct.data.oracle_dataset import OracleTrainDataset, collate_fn_oracle
+from adaragct.utils.rag_utils import RET_START_TOKEN, RET_END_TOKEN, RAG_TOKEN
 from adaragct.train.loss import mask_retrieval_context_batch, count_masked_tokens
 from adaragct.train.c5_head import C5Head, find_sentence_boundary_positions
 

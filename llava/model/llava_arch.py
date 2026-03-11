@@ -26,13 +26,16 @@ from llava.constants import TOKEN_FOR_MULTIPLE_CHOICE, TOKEN_FOR_LONG_ANSWER, TO
 
 # Import organ token indices for multi-index support
 try:
-    from stage3_turn.constants import ORGAN_TOKEN_INDICES, ORGAN_INDEX_TO_SLOT
+    from adaragct.constants import ORGAN_TOKEN_INDICES, ORGAN_INDEX_TO_SLOT
     HAS_ORGAN_TOKENS = True
 except ImportError:
-    # Fallback for non-stage3_turn usage
-    HAS_ORGAN_TOKENS = False
-    ORGAN_TOKEN_INDICES = set()
-    ORGAN_INDEX_TO_SLOT = {}
+    try:
+        from stage3_turn.constants import ORGAN_TOKEN_INDICES, ORGAN_INDEX_TO_SLOT
+        HAS_ORGAN_TOKENS = True
+    except ImportError:
+        HAS_ORGAN_TOKENS = False
+        ORGAN_TOKEN_INDICES = set()
+        ORGAN_INDEX_TO_SLOT = {}
 
 from llava.mm_utils import get_anyres_image_grid_shape
 

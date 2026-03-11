@@ -80,7 +80,7 @@ def compute_bertscore(hypotheses: List[str], references: List[str]) -> Dict[str,
         return {"bertscore_p": 0.0, "bertscore_r": 0.0, "bertscore_f": 0.0}
 
 
-DEFAULT_CLINICAL_LABELS_CSV = "/orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/multi_abnormality_labels/valid_predicted_labels.csv"
+DEFAULT_CLINICAL_LABELS_CSV = "data/annotations/valid_predicted_labels.csv"
 DEFAULT_RADBERT_CHECKPOINT = "/orange/xujie/liang.renjie/DATA/weights/CT-CLIP/RadBertClassifier.pth"
 
 

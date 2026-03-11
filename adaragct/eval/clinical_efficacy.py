@@ -252,7 +252,7 @@ def compute_clinical_efficacy_from_labels(
 # Shared utilities for clinical label loading and F1 computation
 # ============================================================
 
-DEFAULT_CLINICAL_LABELS_CSV = "/orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/multi_abnormality_labels/valid_predicted_labels.csv"
+DEFAULT_CLINICAL_LABELS_CSV = "data/annotations/valid_predicted_labels.csv"
 DEFAULT_RADBERT_CHECKPOINT = "/orange/xujie/liang.renjie/DATA/weights/CT-CLIP/RadBertClassifier.pth"
 
 

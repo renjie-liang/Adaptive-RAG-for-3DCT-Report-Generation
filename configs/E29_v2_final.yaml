@@ -32,19 +32,19 @@ model:
   projector_layers: 2
   tokens_per_embedding: 1
 data:
-  train_embeddings_npz: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/ViSD-Boost-embeds/train_embeds.npz
-  val_embeddings_npz: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/ViSD-Boost-embeds/valid_embeds.npz
+  train_embeddings_npz: data/embeddings/visd_boost/train_embeds.npz
+  val_embeddings_npz: data/embeddings/visd_boost/valid_embeds.npz
   whole_ct_key: ct_clip_max
   whole_ct_dim: 512
-  whole_ct_embeddings_npz_train: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/CT-CLIP-embeds/train_embeds.npz
-  whole_ct_embeddings_npz_val: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/CT-CLIP-embeds/valid_embeds.npz
+  whole_ct_embeddings_npz_train: data/embeddings/ct_clip/train_embeds.npz
+  whole_ct_embeddings_npz_val: data/embeddings/ct_clip/valid_embeds.npz
   organ_keys:
   - lung
   - heart
   - esophagus
   - aorta
-  train_vqa_json: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/vqa/train_vqa.json
-  val_vqa_json: /orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/vqa/valid_vqa.json
+  train_vqa_json: data/annotations/train_vqa.json
+  val_vqa_json: data/annotations/valid_vqa.json
   sample_types:
   - image
   train_tasks:

@@ -44,23 +44,7 @@ from adaragct.data.dataset import (
     ORGAN_SYSTEM_PROMPT,
 )
 from adaragct.utils.logger import get_module_logger
-
-# Special tokens for RAG context injection
-RET_START_TOKEN = "<|ret_start|>"
-RET_END_TOKEN = "<|ret_end|>"
-RAG_TOKEN = "[RAG]"
-
-
-def is_valid_sentence(s: str) -> bool:
-    """Filter out empty/meaningless fragments."""
-    s = s.strip()
-    if not s:
-        return False
-    if all(c in ' \t\n.,;:!?' for c in s):
-        return False
-    if s.rstrip(':').lower() in ('lung', 'heart', 'esophagus', 'aorta', 'other', 'findings'):
-        return False
-    return True
+from adaragct.utils.rag_utils import RET_START_TOKEN, RET_END_TOKEN, RAG_TOKEN, is_valid_sentence
 
 
 class OracleTrainDataset(Dataset):

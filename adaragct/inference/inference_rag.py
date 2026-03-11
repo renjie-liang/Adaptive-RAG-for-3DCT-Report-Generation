@@ -61,7 +61,7 @@ from adaragct.data.dataset import (
     _build_chat_prompt, _normalize_image_id, TASK_TOKENS,
 )
 
-from adaragct.data.oracle_dataset import RET_START_TOKEN, RET_END_TOKEN, RAG_TOKEN
+from adaragct.utils.rag_utils import RET_START_TOKEN, RET_END_TOKEN, RAG_TOKEN
 from adaragct.train.train_rag import _normalize_text
 from collections import Counter
 from transformers import DynamicCache
@@ -111,12 +111,12 @@ def lookup_context(
 
 # ── Normal RAG: online retrieval utilities ─────────────────────────────────────
 
-VISD_BOOST_DIR = "/orange/xujie/liang.renjie/3DCT/3DCT_Encoder/ViSD-Boost"
-E2E_CKPT = "results/P2_rag/finetune/e2e_checkpoints/best_e2e.pth"
-DATABASE_DIR = "results/P2_rag/database"
-IMG2IMG_PATH = "results/P2_rag/real_retrieval/img2img_top20.json"
-IMG2IMG_WHOLE_CT_PATH = "results/P2_rag/real_retrieval/img2img_top20_whole_ct.json"
-SENTENCE_DB_PATH = "results/P2_rag/database/train_sentences_multi_label.json"
+VISD_BOOST_DIR = "data/retrieval/visd_boost"
+E2E_CKPT = "data/retrieval/best_e2e.pth"
+DATABASE_DIR = "data/retrieval/database"
+IMG2IMG_PATH = "data/retrieval/img2img_top20.json"
+IMG2IMG_WHOLE_CT_PATH = "data/retrieval/img2img_top20_whole_ct.json"
+SENTENCE_DB_PATH = "data/retrieval/train_sentences_multi_label.json"
 
 ORGAN_KEYWORDS = {
     "lung": ["lung", "pulmonary", "bronch", "lobe", "nodule", "opacity", "atelectasis",
@@ -1009,7 +1009,7 @@ def main():
         )
 
     # Determine mode
-    ORACLE_CONTEXT_PATH = "results/P2_rag/oracle/oracle_context_top3.jsonl"
+    ORACLE_CONTEXT_PATH = "data/oracle/oracle_context_top3.jsonl"
     if args.no_rag:
         mode = "no_rag"
     elif args.oracle:

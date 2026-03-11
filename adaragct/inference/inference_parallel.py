@@ -40,7 +40,7 @@ from adaragct.inference.inference_rag import (
     IMG2IMG_WHOLE_CT_PATH,
     SENTENCE_DB_PATH,
 )
-from adaragct.data.oracle_dataset import RET_START_TOKEN, RET_END_TOKEN, RAG_TOKEN
+from adaragct.utils.rag_utils import RET_START_TOKEN, RET_END_TOKEN, RAG_TOKEN
 from adaragct.data.dataset import (
     ORGAN_TOKENS_DESC, SYSTEM_PROMPTS, _build_chat_prompt, TASK_TOKENS,
 )
@@ -71,7 +71,7 @@ def worker_fn(
     all_context_texts = None
     rag_resources = None
 
-    ORACLE_CONTEXT_PATH = "results/P2_rag/oracle/oracle_context_top3.jsonl"
+    ORACLE_CONTEXT_PATH = "data/oracle/oracle_context_top3.jsonl"
 
     if mode == "oracle":
         context_index = build_context_index(ORACLE_CONTEXT_PATH)

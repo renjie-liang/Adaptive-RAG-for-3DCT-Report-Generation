@@ -75,7 +75,7 @@ def parse_args():
     parser.add_argument(
         '--clinical-labels-csv',
         type=str,
-        default="/orange/xujie/liang.renjie/DATA/dataset/CT-RATE/dataset/multi_abnormality_labels/valid_predicted_labels.csv",
+        default="data/annotations/valid_predicted_labels.csv",
         help=(
             'Optional: path to CT-RATE multi_abnormality_labels CSV (e.g. train_predicted_labels.csv). '
             'If provided, clinical efficacy will use these labels as ground truth (aligned by prediction["image"] == CSV VolumeName).'
