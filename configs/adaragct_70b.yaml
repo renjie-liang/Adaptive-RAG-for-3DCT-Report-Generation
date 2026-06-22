@@ -1,24 +1,22 @@
-# P10: RAG Token Training — 8B, oracle_ratio=0.7 + no_context_rate=0.0
-# Based on P09. Additional change: remove no_context samples entirely.
-# Hypothesis: every sample sees "trigger→context", reinforcing trigger behavior.
+# AdaRAG-CT 70B — RAG-token training (oracle_ratio=0.7, no_context_rate=0.0)
 
 experiment:
-  name: "P10_rag_token_oracle07_noctx0_8b"
+  name: "adaragct_70b"
   seed: 42
 
 device:
   type: "cuda"
 
 paths:
-  output_dir: "results/rag_oracle_{datetime}/P10_rag_token_oracle07_noctx0_8b"
+  output_dir: "results/train/adaragct_70b_{datetime}"
 
 model:
-  model_path: "results/base_8b/checkpoint"
+  model_path: "results/base_70b/checkpoint"
   model_name: "llava-llama"
   use_flash_attn: false
   gradient_checkpointing: true
   train_projector_only: false
-  pretrain_checkpoint: "results/base_8b/checkpoint"
+  pretrain_checkpoint: "results/base_70b/checkpoint"
   freeze_projector: true
   lora_r: 32
   lora_alpha: 64
@@ -40,15 +38,15 @@ data:
   train_reports_csv: "data/annotations/train_reports.csv"
   oracle_context_jsonl: "data/oracle/oracle_context_top3.jsonl"
   real_context_jsonl: "data/retrieval/retrieval_context_top3.jsonl"
-  batch_size: 8
+  batch_size: 4
   num_workers: 4
   use_chat_template: true
   system_prompt: "detailed"
 
 rag_token:
-  no_context_rate: 0.0        # P09=0.1 → 0.0 (all samples get context)
-  oracle_ratio: 0.7           # same as P09 (real_rag = 1-0.0-0.7 = 0.3)
-  max_rag_per_sample: 4       # unchanged from P05
+  no_context_rate: 0.0        # all samples get context
+  oracle_ratio: 0.7           # real_rag = 1 - 0.0 - 0.7 = 0.3
+  max_rag_per_sample: 4
 
 training:
   max_steps: 10000
@@ -63,7 +61,7 @@ training:
     type: "warmup_cosine"
     warmup_steps: 200
     min_lr_ratio: 0.01
-  grad_accum_steps: 2
+  grad_accum_steps: 8
   max_seq_length_by_task:
     report_generation: 4096
   use_amp: true

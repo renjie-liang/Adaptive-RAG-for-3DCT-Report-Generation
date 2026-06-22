@@ -5,14 +5,9 @@ Computes NLP metrics (BLEU, ROUGE, BERTScore) and clinical F1
 on predictions from inference.py.
 
 Usage:
-    python P2_rag/oracle/evaluate.py \
-        --predictions results/P2_rag/oracle/oracle_raw_entropy/predictions.json \
-        --output results/P2_rag/oracle/oracle_raw_entropy/metrics.json
-
-    # Compare multiple experiments:
-    python P2_rag/oracle/evaluate.py \
-        --predictions results/P2_rag/oracle/*/predictions.json \
-        --output results/P2_rag/oracle/comparison.json
+    python -m adaragct.inference.evaluate \
+        --predictions results/adaragct_8b/predictions.jsonl \
+        --output results/adaragct_8b/metrics.json
 """
 
 import argparse

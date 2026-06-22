@@ -21,12 +21,10 @@ beartype
 sacrebleu
 pycocoevalcap
 
-# RAG components (stage3_rag)
+# RAG components
 faiss-cpu
 spacy
+monai           
 
 # Model components
 vector-quantize-pytorch
-
-# Optional: WandB logging (disable in debug configs)
-# wandb

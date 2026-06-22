@@ -1,21 +1,19 @@
-# E29_v2: Phase 2 Final Production Version
-# Base: CT-CLIP max (512-dim) + independent projector + chat template + LoRA SFT
-# Changes from E29: max_steps=8000, keep_last_n=40 (extended training for production checkpoint)
+# Base 8B — CT-CLIP (512-dim) projector + chat template + LoRA SFT (reference config)
 
 experiment:
-  name: E29_v2_final
+  name: base_8b
   seed: 42
 device:
   type: cuda
 paths:
-  output_dir: ./results/stage3_turn/E29_v2_final
+  output_dir: ./results/train/base_8b
 model:
   model_path: /path/to/Llama-3.1-8B-Instruct
   model_name: llava-llama
   use_flash_attn: false
   gradient_checkpointing: true
   train_projector_only: false
-  pretrain_checkpoint: ./results/base_model/E26_ctclip_max/checkpoints/step_9000.pt
+  pretrain_checkpoint: /path/to/ctclip_projector_pretrain.pt
   freeze_projector: true
   lora_r: 128
   lora_alpha: 256

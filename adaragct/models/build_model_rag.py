@@ -67,7 +67,7 @@ def load_model_peft(
         raise FileNotFoundError(f"[load_model_peft] Checkpoint dir not found: {ckpt_dir}")
 
     print(f"\n{'='*60}")
-    print(f"[load_model_peft] Loading P2_rag checkpoint: {ckpt_dir}")
+    print(f"[load_model_peft] Loading AdaRAG-CT checkpoint: {ckpt_dir}")
     print(f"{'='*60}")
 
     # ── 1. Read adapter_config.json ───────────────────────────────────────────

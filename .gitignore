@@ -53,3 +53,9 @@ checkpoints/
 # Temporary
 tmp/
 *.tmp
+
+# Local-only — never publish to GitHub (HF upload is handled separately by script)
+/.cache/
+/.claude/
+/ECCV_sumbit/
+figures/Poster_*
